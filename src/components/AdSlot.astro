@@ -1,0 +1,5 @@
+---
+// Phase 6 fills this from a cached /api/ads?position=... endpoint. Empty slots collapse via CSS.
+const { position } = Astro.props as { position: 'top'|'main_headline'|'sidebar'|'in_between'|'bottom' };
+---
+<div class="ad-slot" data-ad-position={position} aria-label="जाहिरात"></div>

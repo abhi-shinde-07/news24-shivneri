@@ -1,0 +1,45 @@
+---
+import '../styles/newspaper.css';
+import AdSlot from '../components/AdSlot.astro';
+const { title = 'NEWS24 SHIVNERI', description = 'मराठी डिजिटल वृत्तपत्र – आजचे सत्य • उद्याची दिशा' } = Astro.props;
+const nav = [
+  ['मुख्यपृष्ठ','/'],['ताज्या बातम्या','/latest'],['राजकारण','/category/politics'],
+  ['सामाजिक','/category/social'],['शिक्षण','/category/education'],['शेती','/category/agriculture'],
+  ['व्यवसाय','/category/business'],['क्रीडा','/category/sports'],['मनोरंजन','/category/entertainment'],
+  ['फोटो','/photos'],['व्हिडिओ','/videos'],['ई-पेपर','/epaper'],
+];
+---
+<!doctype html>
+<html lang="mr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600&family=Noto+Serif+Devanagari:wght@700;800&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="dateline"><span id="today"></span><span>स्थानिक आवृत्ती</span></div>
+    <header class="masthead">
+      <p class="name">NEWS24 SHIVNERI</p>
+      <p class="sub">मराठी डिजिटल वृत्तपत्र</p>
+      <p class="tag">आजचे सत्य • उद्याची दिशा</p>
+    </header>
+    <nav class="nav" aria-label="मुख्य मेनू"><ul>{nav.map(([t,h]) => <li><a href={h}>{t}</a></li>)}</ul></nav>
+    <AdSlot position="top" />
+    <main><slot /></main>
+    <AdSlot position="bottom" />
+    <footer class="footer">
+      <span>© NEWS24 SHIVNERI</span>
+      <span><a href="/contact">संपर्क</a> · <a href="/about">आमच्याबद्दल</a> · <a href="/editorial-policy">संपादकीय धोरण</a> · <a href="/corrections">सुधारणा</a></span>
+    </footer>
+  </div>
+  <script is:inline>
+    document.getElementById('today').textContent =
+      new Date().toLocaleDateString('mr-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  </script>
+</body>
+</html>

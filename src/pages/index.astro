@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import AdSlot from '../components/AdSlot.astro';
+// SAMPLE DATA – replaced by D1 queries in Phase 2/3. Shows the required attribution fields.
+const lead = { headline:'शिवनेरी परिसरात नव्या पाणीपुरवठा योजनेला मंजुरी', subtitle:'ग्रामस्थांना पुढील वर्षापासून नियमित पाणी मिळण्याची अपेक्षा', byline:'प्रतिनिधी', source:'स्वतःचे वार्ताहर', place:'शिवनेरी', date:'नमुना तारीख' };
+const others = ['शेतकऱ्यांसाठी कांदा खरेदी केंद्र सुरू','जिल्हा परिषद शाळेत विज्ञान प्रदर्शन','स्थानिक क्रिकेट स्पर्धेचा अंतिम सामना रविवारी'];
+---
+<Base>
+  <div class="breaking"><strong>ताज्या बातम्या</strong><a href="#">नमुना: ताज्या बातमीचे शीर्षक येथे दिसेल</a></div>
+  <AdSlot position="main_headline" />
+  <section class="front">
+    <div class="col">
+      <div class="lead-photo" role="img" aria-label="मुख्य छायाचित्र">मुख्य छायाचित्र</div>
+      <p class="caption">छायाचित्र: नमुना · श्रेय: येथे दिसेल</p>
+      <h1 class="h-lead"><a href="#">{lead.headline}</a></h1>
+      <p class="deck">{lead.subtitle}</p>
+      <p class="byline"><b>{lead.byline}</b> · स्रोत: {lead.source} · {lead.place} · {lead.date}</p>
+    </div>
+    <div class="col">
+      <h2 class="section-head first">इतर महत्त्वाच्या बातम्या</h2>
+      {others.map(t => <div class="item"><h3 class="h-mid"><a href="#">{t}</a></h3><p class="byline">प्रतिनिधी · नमुना तारीख</p></div>)}
+    </div>
+    <div class="col">
+      <AdSlot position="sidebar" />
+      <h2 class="section-head first">आजच्या प्रमुख बातम्या</h2>
+      {others.map(t => <div class="item"><h3 class="h-small"><a href="#">{t}</a></h3></div>)}
+    </div>
+  </section>
+  <AdSlot position="in_between" />
+  <h2 class="section-head">फोटो गॅलरी आणि व्हिडिओ बातम्या</h2>
+  <h2 class="section-head">आजचा ई-पेपर</h2>
+</Base>

@@ -1,0 +1,13 @@
+{
+  "name": "news24-shivneri",
+  "main": "dist/_worker.js/index.js",
+  "compatibility_date": "2026-01-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": { "binding": "ASSETS", "directory": "./dist" },
+  "d1_databases": [
+    { "binding": "DB", "database_name": "news24-db", "database_id": "REPLACE_WITH_ID_FROM_wrangler_d1_create", "migrations_dir": "migrations" }
+  ],
+  "r2_buckets": [
+    { "binding": "MEDIA", "bucket_name": "news24-media" }
+  ]
+}
