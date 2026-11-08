@@ -1,19 +1,35 @@
 {
-  "name": "news24-shivneri",
-  "main": "dist/_worker.js/index.js",
-  "compatibility_date": "2026-01-01",
-  "compatibility_flags": ["nodejs_compat"],
-  "assets": { "binding": "ASSETS", "directory": "./dist" },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "news24-db",
-      "database_id": "e0e39593-075c-4983-865d-56355825e094",
-      "migrations_dir": "migrations",
-      "remote": false
-    }
-  ],
-  "r2_buckets": [
-    { "binding": "MEDIA", "bucket_name": "news24-media", "remote": false }
-  ]
+	"name": "news24-shivneri",
+	"main": "dist/_worker.js/index.js",
+	"compatibility_date": "2026-01-01",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"assets": {
+		"binding": "ASSETS",
+		"directory": "./dist"
+	},
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "news24-db",
+			"database_id": "e0e39593-075c-4983-865d-56355825e094",
+			"migrations_dir": "migrations",
+			"remote": false
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "MEDIA",
+			"bucket_name": "news24-media",
+			"remote": false
+		}
+	],
+	"kv_namespaces": [
+		{
+			"binding": "SESSION",
+			"id": "ab4f324d12da4fe29d3c949d2e595e27",
+			"remote": true
+		}
+	]
 }
