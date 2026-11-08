@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import Card from '../../components/Card.astro';
+import Sidebar from '../../components/Sidebar.astro';
 import Pager from '../../components/Pager.astro';
 import { getDB, getCategory } from '../../lib/db';
 import { pageFrom } from '../../lib/page';
@@ -13,8 +14,12 @@ const base = `/category/${slug}`;
 ---
 <Base title={`${data.name}${page > 1 ? ` – पान ${page}` : ''} – NEWS24 SHIVNERI`}
   description={`${data.name} विभागातील पुणे जिल्ह्यातील ताज्या बातम्या – NEWS24 SHIVNERI`} canonical={page > 1 ? `${base}?page=${page}` : base}>
+  <div class="with-side"><div class="main-col">
   <h1 class="section-head first">{data.name}</h1>
   {data.articles.length === 0 && <p class="deck">या विभागात अद्याप बातम्या नाहीत.</p>}
   <div class="list">{data.articles.map((a) => <Card a={a} showCat={false} />)}</div>
   <Pager page={page} hasNext={data.hasNext} base={base} />
+  </div>
+  <Sidebar />
+  </div>
 </Base>

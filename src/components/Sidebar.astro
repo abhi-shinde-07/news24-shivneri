@@ -1,0 +1,31 @@
+---
+import AdSlot from './AdSlot.astro';
+import { getDB, getLatest, getLatestEpaper } from '../lib/db';
+import { thumbOf } from '../lib/mediaUrl';
+import { fmtDay } from '../lib/format';
+// Right-hand column for article and list pages: ad, latest news with thumbnails, e-paper.
+const { exclude } = Astro.props as { exclude?: number };
+const db = getDB(Astro.locals);
+const [{ articles }, epaper] = await Promise.all([getLatest(db, 1, 9), getLatestEpaper(db)]);
+const latest = articles.filter((a) => a.id !== exclude).slice(0, 8);
+---
+<aside class="sidebar" aria-label="ताज्या बातम्या">
+  <AdSlot position="sidebar" />
+  <h2 class="section-head first"><a href="/latest">ताज्या बातम्या <span aria-hidden="true">›</span></a></h2>
+  <ul class="side-list">{latest.map((a) => (
+    <li><a href={`/news/${a.id}`}>
+      {thumbOf(a, 'mqdefault') ? <img src={thumbOf(a, 'mqdefault')!} alt="" loading="lazy" width="96" height="54" /> : <span class="side-noimg"></span>}
+      <span>{a.headline}</span></a></li>))}</ul>
+  {epaper && (
+    <div class="epaper-box">
+      <h2 class="section-head">ई-पेपर</h2>
+      <a href={`/epaper/${epaper.edition_date}`}>
+        {epaper.cover_key && <img src={`/files/${epaper.cover_key}`} alt="" loading="lazy" width="300" height="420" />}
+        <b>{epaper.title}</b><span>{fmtDay(epaper.edition_date)}</span>
+      </a>
+    </div>)}
+  <div class="side-cta">
+    <b>तुमच्या परिसरातील बातमी आम्हाला कळवा</b>
+    <a class="btn" href="/contact">संपर्क करा</a>
+  </div>
+</aside>

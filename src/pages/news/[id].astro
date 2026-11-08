@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import AdSlot from '../../components/AdSlot.astro';
 import Card from '../../components/Card.astro';
+import Sidebar from '../../components/Sidebar.astro';
 import { getDB, getArticle } from '../../lib/db';
 import { fmtDate } from '../../lib/format';
 import { mediaUrl, rewriteBody, thumbOf } from '../../lib/mediaUrl';
@@ -30,6 +31,7 @@ const share = encodeURIComponent(`${a.headline}\n${url}`);
 <Base title={`${a.headline} – NEWS24 SHIVNERI`} description={description} canonical={`/news/${a.id}`}
   type="article" image={thumb ?? undefined} published={a.published_at} modified={a.updated_at}>
   <script slot="head" type="application/ld+json" set:html={ld} />
+  <div class="with-side"><div class="main-col">
   <article class="article-body">
     <p class="crumbs"><a href="/">मुख्यपृष्ठ</a> › <a href={`/category/${a.category_slug}`}>{a.category_name}</a>{a.location_label && <> · {a.location_label}</>}</p>
     <h1 class="h-lead">{a.headline}</h1>
@@ -65,4 +67,7 @@ const share = encodeURIComponent(`${a.headline}\n${url}`);
       <h2 class="section-head">याच विभागातील इतर बातम्या</h2>
       <div class="list two">{related.map((r) => <Card a={r} tag="h3" showCat={false} />)}</div>
     </section>)}
+  </div>
+  <Sidebar exclude={a.id} />
+  </div>
 </Base>

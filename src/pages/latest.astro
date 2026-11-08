@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Card from '../components/Card.astro';
+import Sidebar from '../components/Sidebar.astro';
 import Pager from '../components/Pager.astro';
 import { getDB, getLatest } from '../lib/db';
 import { pageFrom } from '../lib/page';
@@ -11,8 +12,12 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60');
 ---
 <Base title={`ताज्या बातम्या${page > 1 ? ` – पान ${page}` : ''} – NEWS24 SHIVNERI`}
   description="पुणे जिल्ह्यातील ताज्या मराठी बातम्या – NEWS24 SHIVNERI" canonical={page > 1 ? `/latest?page=${page}` : '/latest'}>
+  <div class="with-side"><div class="main-col">
   <h1 class="section-head first">ताज्या बातम्या</h1>
   {articles.length === 0 && <p class="deck">अद्याप बातम्या प्रकाशित झालेल्या नाहीत.</p>}
   <div class="list">{articles.map((a) => <Card a={a} />)}</div>
   <Pager page={page} hasNext={hasNext} base="/latest" />
+  </div>
+  <Sidebar />
+  </div>
 </Base>
