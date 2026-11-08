@@ -16,7 +16,8 @@ const ld = JSON.stringify({
   inLanguage: 'mr',
 }).replace(/</g, '\\u003c');
 ---
-<Base title={`${a.headline} – NEWS24 SHIVNERI`} description={a.subtitle ?? a.headline}>
+<Base title={`${a.headline} – NEWS24 SHIVNERI`} description={a.subtitle ?? a.headline}
+  type="article" image={a.main_image_key ? mediaUrl(a.main_image_key) : undefined}>
   <script slot="head" type="application/ld+json" set:html={ld} />
   <article class="article-body">
     <p class="byline"><a href={`/category/${a.category_slug}`}>{a.category_name}</a>{a.location_label && <> · {a.location_label}</>}</p>

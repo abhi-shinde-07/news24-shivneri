@@ -29,7 +29,7 @@
 		{
 			"binding": "SESSION",
 			"id": "ab4f324d12da4fe29d3c949d2e595e27",
-			"remote": true
+			"remote": false
 		}
 	]
 }

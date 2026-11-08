@@ -20,9 +20,12 @@ img { max-width: 100%; display: block; }
 
 .dateline { display: flex; justify-content: space-between; gap: 1rem; font-size: .9rem; color: var(--ink-soft); border-bottom: 1px solid var(--rule-light); padding: .35rem 0; }
 .masthead { text-align: center; padding: 1.1rem 0 .6rem; border-bottom: 3px double var(--rule); }
-.masthead .name { font-family: var(--font-head); font-weight: 800; font-size: clamp(2.2rem, 7vw, 4.6rem); line-height: 1.05; letter-spacing: .01em; margin: 0; }
-.masthead .sub { font-family: var(--font-head); font-weight: 700; font-size: 1.15rem; margin: .25rem 0 0; }
-.masthead .tag { margin: .1rem 0 0; color: var(--red); font-weight: 600; }
+/* logo.png has a #f7f7f7 background; brightness lifts it to page white. */
+.masthead .logo { display: inline-block; }
+.masthead .logo:hover { text-decoration: none; }
+.masthead .logo img { height: 70px; width: auto; margin: 0 auto; filter: brightness(1.033); }
+@media (min-width: 860px) { .masthead .logo img { height: 110px; } }
+.masthead .tag { margin: .3rem 0 0; font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--red); }
 
 .nav { border-bottom: 1px solid var(--rule); }
 .nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; }
@@ -63,7 +66,11 @@ img { max-width: 100%; display: block; }
 .article-body { max-width: 68ch; margin: 0 auto; font-size: 1.15rem; line-height: 1.9; }
 .correction { border-left: 4px solid var(--red); padding: .4rem .9rem; margin: 1.2rem 0; background: #fafafa; }
 
-.footer { border-top: 3px double var(--rule); margin-top: 2rem; padding: 1rem 0 2rem; font-size: .92rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; justify-content: space-between; }
+.footer { border-top: 3px double var(--rule); margin-top: 2rem; padding: 1rem 0 2rem; font-size: .92rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; justify-content: space-between; align-items: center; }
+.footer-brand { display: flex; align-items: center; gap: .75rem; }
+.footer-brand img { height: 56px; width: auto; filter: brightness(1.033); }
+.footer-brand p { margin: 0; line-height: 1.4; }
+.footer-brand .tag { font-family: var(--font-head); font-weight: 700; color: var(--red); }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
 
 .article-body img{width:100%;height:auto}.article-body figure{margin:1rem 0}.article-body figcaption{font-size:.85rem;color:var(--ink-soft);border-bottom:1px solid var(--rule-light);padding:.3rem 0}
