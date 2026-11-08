@@ -6,8 +6,8 @@ import { getBucket, MAX_UPLOAD, newKey, sniffImage } from '../../../../lib/media
 export const GET: APIRoute = async ({ locals, url }) => {
   const db = getDB(locals);
   const before = Number(url.searchParams.get('before')) || 1e12;
-  const items = (await db.prepare('SELECT id, key, filename, size FROM media WHERE id < ? ORDER BY id DESC LIMIT 60').bind(before)
-    .all<{ id: number; key: string; filename: string | null; size: number }>()).results;
+  const items = (await db.prepare('SELECT id, key, filename, size, in_gallery, caption FROM media WHERE id < ? ORDER BY id DESC LIMIT 60').bind(before)
+    .all<{ id: number; key: string; filename: string | null; size: number; in_gallery: number; caption: string | null }>()).results;
   const t = await db.prepare('SELECT COALESCE(SUM(size),0) AS bytes, COUNT(*) AS n FROM media').first<{ bytes: number; n: number }>();
   return json({ items, total_bytes: t?.bytes ?? 0, count: t?.n ?? 0 });
 };

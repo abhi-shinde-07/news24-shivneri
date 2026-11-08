@@ -1,0 +1,27 @@
+---
+import Base from '../../layouts/Base.astro';
+import Pager from '../../components/Pager.astro';
+import { getDB, type Epaper } from '../../lib/db';
+import { fmtDay } from '../../lib/format';
+import { pageFrom } from '../../lib/page';
+const PER = 24;
+const page = pageFrom(Astro.url);
+const rows = (await getDB(Astro.locals).prepare(
+  `SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size FROM epapers WHERE status = 'published'
+   ORDER BY edition_date DESC LIMIT ? OFFSET ?`).bind(PER + 1, (page - 1) * PER).all<Epaper>()).results;
+const list = rows.slice(0, PER);
+if (page > 1 && list.length === 0) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=300');
+---
+<Base title="ई-पेपर – NEWS24 SHIVNERI" description="NEWS24 SHIVNERI ई-पेपर संग्रह – तारखेनुसार आवृत्त्या"
+  canonical={page > 1 ? `/epaper?page=${page}` : '/epaper'}>
+  <h1 class="section-head first">ई-पेपर</h1>
+  {list.length === 0 && <p class="deck">अद्याप ई-पेपर प्रकाशित झालेला नाही.</p>}
+  <div class="egrid">{list.map((e) => (
+    <a href={`/epaper/${e.edition_date}`}>
+      {e.cover_key ? <img src={`/files/${e.cover_key}`} alt="" loading="lazy" width="300" height="420" />
+        : <span class="nocover">{fmtDay(e.edition_date)}</span>}
+      <b>{fmtDay(e.edition_date)}</b><span class="byline">{e.edition_name}</span>
+    </a>))}</div>
+  <Pager page={page} hasNext={rows.length > PER} base="/epaper" />
+</Base>

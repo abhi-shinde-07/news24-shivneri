@@ -23,6 +23,18 @@ export async function verifyPassword(password: string, stored: string) {
   return diff === 0;
 }
 
+// Same format as scripts/make-admin.mjs.
+export async function hashPassword(password: string) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return `pbkdf2$${ITERATIONS}$${toHex(salt)}$${toHex(await pbkdf2(password, salt, ITERATIONS))}`;
+}
+
+// Log out every other device of this user (after a password change).
+export async function destroyOtherSessions(db: D1, request: Request, userId: number) {
+  const token = tokenFrom(request);
+  await db.prepare('DELETE FROM sessions WHERE user_id = ? AND id <> ?').bind(userId, token ? await sha256Hex(token) : '').first();
+}
+
 const now = () => new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 
 export async function createSession(db: D1, userId: number) {

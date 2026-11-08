@@ -1,6 +1,7 @@
 ---
 import { getDB } from '../../lib/db';
 import { getUser, verifyPassword, createSession, sessionCookie, tooManyAttempts, recordFailure } from '../../lib/auth';
+import { verifyTotp } from '../../lib/totp';
 const db = getDB(Astro.locals);
 if (await getUser(db, Astro.request)) return Astro.redirect('/admin');
 let error = '';
@@ -12,15 +13,17 @@ if (Astro.request.method === 'POST') {
     const f = await Astro.request.formData();
     const email = String(f.get('email') ?? '').trim().toLowerCase();
     const password = String(f.get('password') ?? '');
-    const user = await db.prepare('SELECT id, password_hash FROM users WHERE email = ?')
-      .bind(email).first<{ id: number; password_hash: string }>();
-    if (user && (await verifyPassword(password, user.password_hash))) {
+    const code = String(f.get('code') ?? '');
+    const user = await db.prepare('SELECT id, password_hash, totp_secret, totp_enabled FROM users WHERE email = ?')
+      .bind(email).first<{ id: number; password_hash: string; totp_secret: string | null; totp_enabled: number }>();
+    const codeOk = !user?.totp_enabled || (!!user.totp_secret && (await verifyTotp(user.totp_secret, code)));
+    if (user && (await verifyPassword(password, user.password_hash)) && codeOk) {
       const token = await createSession(db, user.id);
       return new Response(null, { status: 303, headers: {
         Location: '/admin', 'Set-Cookie': sessionCookie(token, Astro.url.protocol === 'https:') } });
     }
     await recordFailure(db, ip);
-    error = 'ईमेल किंवा पासवर्ड चुकीचा आहे.';
+    error = 'ईमेल, पासवर्ड किंवा कोड चुकीचा आहे.';
   }
 }
 ---
@@ -48,6 +51,7 @@ if (Astro.request.method === 'POST') {
   <h1>NEWS24 SHIVNERI – Admin</h1>
   <label for="email">ईमेल</label><input id="email" name="email" type="email" autocomplete="username" required />
   <label for="password">पासवर्ड</label><input id="password" name="password" type="password" autocomplete="current-password" required />
+  <label for="code">२-पायरी कोड <small>(चालू केला असल्यासच)</small></label><input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" />
   {error && <p class="err" role="alert">{error}</p>}
   <button type="submit">लॉगिन</button>
 </form>

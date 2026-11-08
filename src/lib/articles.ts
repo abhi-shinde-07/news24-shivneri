@@ -1,4 +1,15 @@
 import { sanitizeBody } from './sanitize';
+import type { D1 } from './db';
+
+// Permanent delete. Corrections, revisions and gallery rows go with it (ON DELETE CASCADE plus explicit deletes
+// in case foreign keys are not enforced). Uploaded photos stay in the Media Library.
+export async function deleteArticle(db: D1, id: number) {
+  if (!Number.isInteger(id) || !(await db.prepare('SELECT id FROM articles WHERE id = ?').bind(id).first())) return false;
+  for (const t of ['corrections', 'article_revisions', 'article_images'])
+    await db.prepare(`DELETE FROM ${t} WHERE article_id = ?`).bind(id).first();
+  await db.prepare('DELETE FROM articles WHERE id = ?').bind(id).first();
+  return true;
+}
 
 export type ArticleInput = {
   headline: string; subtitle: string | null; body_html: string; category_id: number;

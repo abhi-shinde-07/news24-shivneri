@@ -1,0 +1,11 @@
+---
+const { page, hasNext, base } = Astro.props as { page: number; hasNext: boolean; base: string };
+const href = (n: number) => (n <= 1 ? base : `${base}?page=${n}`);
+---
+{(page > 1 || hasNext) && (
+  <nav class="pager" aria-label="पाने">
+    {page > 1 ? <a href={href(page - 1)}>← मागील</a> : <span></span>}
+    <span>पान {page.toLocaleString('mr-IN')}</span>
+    {hasNext ? <a href={href(page + 1)}>पुढील →</a> : <span></span>}
+  </nav>
+)}

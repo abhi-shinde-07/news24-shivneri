@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
-import Link from '@tiptap/extension-link';
-import Underline from '@tiptap/extension-underline';
 import { Node } from '@tiptap/core';
 import MediaGrid from './MediaGrid';
 
@@ -39,9 +37,11 @@ export default function ArticleEditor({ categories, initial, corrections = [] }:
   const set = (k: keyof Initial, v: unknown) => setF((p) => ({ ...p, [k]: v }));
 
   const editor = useEditor({
-    extensions: [StarterKit.configure({ heading: { levels: [2, 3] } }), Underline, Figure, Link.configure({ openOnClick: false })],
+    // Tiptap 3: StarterKit already includes Link and Underline.
+    extensions: [StarterKit.configure({ heading: { levels: [2, 3] }, link: { openOnClick: false } }), Figure],
     content: initial.body_html,
     immediatelyRender: false,
+    shouldRerenderOnTransaction: true, // keep toolbar buttons' active state live (Tiptap 3 default is off)
   });
 
   async function save(status: 'draft' | 'published' | 'archived') {
@@ -56,6 +56,14 @@ export default function ArticleEditor({ categories, initial, corrections = [] }:
     if (!id) { location.href = `/admin/articles/${data.id}`; return; }
     set('status', status);
     setMsg(status === 'published' ? 'प्रकाशित केले.' : 'जतन केले.');
+  }
+
+  async function remove() {
+    if (!confirm('ही बातमी कायमची हटवायची? सुधारणा व जुन्या आवृत्त्याही हटतील. हे परत आणता येणार नाही.')) return;
+    setBusy(true);
+    const res = await fetch(`/api/admin/articles/${id}`, { method: 'DELETE' });
+    if (res.ok) { location.href = '/admin/articles?ok=' + encodeURIComponent('बातमी कायमची हटवली.'); return; }
+    setBusy(false); setMsg((await res.json().catch(() => ({}))).error ?? 'हटवता आले नाही.');
   }
 
   async function addCorrection() {
@@ -135,6 +143,7 @@ export default function ArticleEditor({ categories, initial, corrections = [] }:
         <button type="button" disabled={busy} onClick={() => save('draft')} className="sec">ड्राफ्ट म्हणून जतन करा</button>
         <button type="button" disabled={busy} onClick={() => save('published')}>{f.status === 'published' ? 'अद्यतनित करा' : 'प्रकाशित करा'}</button>
         {id && f.status !== 'archived' && <button type="button" disabled={busy} onClick={() => save('archived')} className="sec">आर्काइव्ह</button>}
+        {id && <button type="button" disabled={busy} onClick={remove} className="danger">हटवा</button>}
         <span role="status">{msg}</span>
       </div>
       {id && (

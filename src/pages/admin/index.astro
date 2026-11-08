@@ -1,23 +1,68 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
 import { getDB } from '../../lib/db';
-import { fmtDate } from '../../lib/format';
+import { fmtDate, fmtSize } from '../../lib/format';
+import { getUsage, R2_LIMIT, D1_LIMIT, WRITES_LIMIT } from '../../lib/usage';
+import { runBackup } from '../../lib/backup';
+import { getBucket } from '../../lib/media';
+import { back } from '../../lib/admin';
 const db = getDB(Astro.locals);
+if (Astro.request.method === 'POST') {
+  try {
+    const r = await runBackup(db, getBucket() as any);
+    return back(Astro.url, `बॅकअप पूर्ण: backups/${r.day}/ (${r.tables} टेबल, ${(r.bytes / 1024).toFixed(0)} KB). शेवटचे ${r.kept} दिवस ठेवले आहेत.`);
+  } catch (e) {
+    return back(Astro.url, `बॅकअप अयशस्वी: ${(e as Error).message}`, true);
+  }
+}
 const counts = (await db.prepare('SELECT status, COUNT(*) AS n FROM articles GROUP BY status').all<{ status: string; n: number }>()).results;
 const n = (s: string) => counts.find((c) => c.status === s)?.n ?? 0;
+const other = await db.prepare(
+  `SELECT (SELECT COUNT(*) FROM ads WHERE status='active' AND end_date >= date('now')) AS ads, (SELECT COUNT(*) FROM videos) AS videos,
+     (SELECT COUNT(*) FROM epapers) AS epapers, (SELECT COUNT(*) FROM media) AS media,
+     (SELECT value FROM settings WHERE key='last_backup') AS last_backup`).first<{ ads: number; videos: number; epapers: number; media: number; last_backup: string | null }>();
 const recent = (await db.prepare(
   `SELECT id, headline, status, published_at, updated_at FROM articles ORDER BY updated_at DESC LIMIT 8`)
   .all<{ id: number; headline: string; status: string; published_at: string | null; updated_at: string }>()).results;
+const u = await getUsage(db);
+const meters = [
+  ['R2 साठवण (फोटो, ई-पेपर, बॅकअप)', u.r2, R2_LIMIT, fmtSize(u.r2) + ' / 10 GB'],
+  ['D1 डेटाबेस आकार', u.d1, D1_LIMIT, fmtSize(u.d1) + ' / 5 GB'],
+  ['आजचे D1 writes (अंदाजे, admin बाजूचे)', u.writesToday, WRITES_LIMIT, `${u.writesToday.toLocaleString('mr-IN')} / 1,00,000`],
+] as const;
+const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
 ---
 <AdminLayout title="Dashboard">
   <h2>नमस्कार, {Astro.locals.user?.name}</h2>
   <div class="cards">
-    <div class="card"><b>{n('published')}</b>Published</div>
-    <div class="card"><b>{n('draft')}</b>Draft</div>
-    <div class="card"><b>{n('archived')}</b>Archived</div>
+    <a class="card" href="/admin/articles?status=published"><b>{n('published')}</b>Published</a>
+    <a class="card" href="/admin/articles?status=draft"><b>{n('draft')}</b>Draft</a>
+    <a class="card" href="/admin/articles?status=archived"><b>{n('archived')}</b>Archived</a>
+    <a class="card" href="/admin/ads"><b>{other?.ads ?? 0}</b>चालू जाहिराती</a>
+    <a class="card" href="/admin/videos"><b>{other?.videos ?? 0}</b>व्हिडिओ</a>
+    <a class="card" href="/admin/epaper"><b>{other?.epapers ?? 0}</b>ई-पेपर</a>
   </div>
+  <p><a class="button" href="/admin/articles/new">+ नवीन बातमी</a></p>
+
+  <h3>मोफत मर्यादा (Usage guard)</h3>
+  <div class="card">
+    {meters.map(([label, val, max, text]) => {
+      const p = Math.min(100, (val / max) * 100);
+      return <div style="margin-bottom:.7rem"><b style="font-size:1rem;display:inline">{label}</b>: {text} ({p.toFixed(1)}%)
+        <div class="meter"><i class={cls(p)} style={`width:${Math.max(p, 0.5)}%`}></i></div></div>;
+    })}
+    <small>७०% वर पिवळा आणि ८०% वर लाल इशारा. Cloudflare मध्ये खर्चाची कमाल मर्यादा नाही; ही पट्टी फक्त या वेबसाइटचा वापर दाखवते.
+      Worker requests (१,००,०००/दिवस) Cloudflare dashboard → Workers → Metrics मध्ये पहा.</small>
+  </div>
+
+  <h3>बॅकअप</h3>
+  <div class="card">
+    <p style="margin-top:0">शेवटचा बॅकअप: <b>{other?.last_backup ?? 'अद्याप नाही'}</b>. बॅकअप R2 मध्ये <code>backups/YYYY-MM-DD/</code> येथे ठेवले जातात (शेवटचे १४).</p>
+    <form method="post"><button type="submit">आता बॅकअप घ्या</button></form>
+  </div>
+
   <h3>अलीकडील बातम्या</h3>
-  <table><thead><tr><th>शीर्षक</th><th>स्थिती</th><th>अद्यतनित</th></tr></thead><tbody>
-    {recent.map((a) => <tr><td><a href={`/news/${a.id}`} target="_blank" rel="noopener">{a.headline}</a></td><td>{a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
-  </tbody></table>
+  <div class="tablewrap"><table><thead><tr><th>शीर्षक</th><th>स्थिती</th><th>अद्यतनित</th></tr></thead><tbody>
+    {recent.map((a) => <tr><td><a href={`/admin/articles/${a.id}`}>{a.headline}</a></td><td>{a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
+  </tbody></table></div>
 </AdminLayout>

@@ -1,0 +1,24 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDB } from '../lib/db';
+import { getSettings } from '../lib/settings';
+const s = await getSettings(getDB(Astro.locals), Astro.locals);
+// Placeholders in [square brackets] are edited from Admin → Website Settings.
+---
+<Base title="आमच्याबद्दल – NEWS24 SHIVNERI" description="NEWS24 SHIVNERI हे पुणे जिल्ह्यातील स्वतंत्र मराठी डिजिटल वृत्तपत्र आहे.">
+  <article class="article-body page">
+    <h1 class="h-lead">आमच्याबद्दल</h1>
+    <p class="deck">“{s.motto}”</p>
+    <p><b>NEWS24 SHIVNERI</b> (NEWS24 शिवनेरी) हे पुणे जिल्ह्यातील वाचकांसाठी चालवले जाणारे स्वतंत्र मराठी डिजिटल वृत्तपत्र आहे. जुन्नर, आंबेगाव, खेड, मावळ, मुळशी, हवेली, शिरूर, दौंड, बारामती, इंदापूर, पुरंदर, भोर, वेल्हे तसेच पुणे व पिंपरी-चिंचवड शहरातील घडामोडी आम्ही पोहोचवतो.</p>
+    <h2>आमचे तत्त्व</h2>
+    <ul>
+      <li>प्रत्येक बातमीसोबत स्रोत, लेखक/प्रतिनिधीचे नाव आणि प्रकाशनाची तारीख.</li>
+      <li>चूक झाल्यास ती सार्वजनिकरित्या दुरुस्त करणे – पहा <a href="/corrections">सुधारणा</a>.</li>
+      <li>जाहिरात आणि बातमी यांत स्पष्ट फरक; प्रत्येक जाहिरातीवर “जाहिरात” असा उल्लेख.</li>
+    </ul>
+    <h2>संपादकीय टीम</h2>
+    <p>संपादक: <b>{s.editor_name}</b></p>
+    <p>कार्यालय: {s.address}</p>
+    <p>अधिक माहितीसाठी <a href="/contact">संपर्क</a> पान पहा.</p>
+  </article>
+</Base>

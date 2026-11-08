@@ -1,0 +1,45 @@
+---
+import AdminLayout from '../../../../layouts/AdminLayout.astro';
+import { getDB } from '../../../../lib/db';
+import { fmtDate } from '../../../../lib/format';
+import { rewriteBody } from '../../../../lib/mediaUrl';
+const db = getDB(Astro.locals);
+const id = Number(Astro.params.id);
+const revId = Number(Astro.url.searchParams.get('rev'));
+const cur = await db.prepare('SELECT headline, body_html FROM articles WHERE id = ?').bind(id).first<{ headline: string; body_html: string }>();
+const rev = await db.prepare(
+  `SELECT r.headline, r.body_html, r.saved_at, u.name FROM article_revisions r LEFT JOIN users u ON u.id = r.saved_by
+   WHERE r.id = ? AND r.article_id = ?`).bind(revId, id).first<{ headline: string; body_html: string; saved_at: string; name: string | null }>();
+if (!cur || !rev) return new Response('आवृत्ती सापडली नाही', { status: 404 });
+
+// Word-level diff of the plain text (LCS). Small enough for article-length text.
+const words = (h: string) => h.replace(/<\/(p|h2|h3|li|blockquote|figcaption)>/g, '\n').replace(/<[^>]*>/g, ' ')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').split(/(\s+)/).filter((w) => w !== '');
+function diff(a: string[], b: string[]) {
+  const A = a.slice(0, 3000), B = b.slice(0, 3000);
+  const dp = Array.from({ length: A.length + 1 }, () => new Uint16Array(B.length + 1));
+  for (let i = A.length - 1; i >= 0; i--) for (let j = B.length - 1; j >= 0; j--)
+    dp[i][j] = A[i] === B[j] ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
+  const out: { t: 'same' | 'del' | 'add'; s: string }[] = [];
+  let i = 0, j = 0;
+  while (i < A.length && j < B.length) {
+    if (A[i] === B[j]) { out.push({ t: 'same', s: A[i] }); i++; j++; }
+    else if (dp[i + 1][j] >= dp[i][j + 1]) out.push({ t: 'del', s: A[i++] });
+    else out.push({ t: 'add', s: B[j++] });
+  }
+  while (i < A.length) out.push({ t: 'del', s: A[i++] });
+  while (j < B.length) out.push({ t: 'add', s: B[j++] });
+  return out;
+}
+const parts = diff(words(rev.headline + '\n' + rev.body_html), words(cur.headline + '\n' + cur.body_html));
+---
+<AdminLayout title="संपादन इतिहास">
+  <p><a href={`/admin/articles/${id}`}>← बातमीकडे परत</a></p>
+  <h2>जुनी आवृत्ती: {fmtDate(rev.saved_at)} {rev.name && <small>({rev.name})</small>}</h2>
+  <h3>फरक (जुनी → सध्याची)</h3>
+  <p><small><del style="background:#fee2e2">लाल = काढलेले</del> · <ins style="background:#dcfce7;text-decoration:none">हिरवे = नवीन</ins></small></p>
+  <div class="card" style="white-space:pre-wrap;line-height:1.8">{parts.map((p) =>
+    p.t === 'same' ? p.s : p.t === 'del' ? <del style="background:#fee2e2">{p.s}</del> : <ins style="background:#dcfce7;text-decoration:none">{p.s}</ins>)}</div>
+  <h3>जुनी आवृत्ती (फक्त वाचण्यासाठी)</h3>
+  <div class="card"><h2>{rev.headline}</h2><div set:html={rewriteBody(rev.body_html)} /></div>
+</AdminLayout>

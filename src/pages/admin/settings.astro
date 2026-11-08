@@ -1,0 +1,40 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDB } from '../../lib/db';
+import { getSettings, saveSettings, type Settings } from '../../lib/settings';
+import { back, readForm, isHttps } from '../../lib/admin';
+const db = getDB(Astro.locals);
+const fields: [keyof Settings, string, string?][] = [
+  ['site_name', 'वेबसाइटचे नाव'], ['motto', 'ब्रीदवाक्य (Motto)'], ['edition', 'आवृत्ती (उदा. स्थानिक आवृत्ती)'],
+  ['editor_name', 'संपादकाचे नाव'], ['contact_email', 'संपर्क ईमेल'], ['phone', 'फोन'], ['address', 'कार्यालयाचा पत्ता', 'textarea'],
+  ['grievance_name', 'तक्रार निवारण अधिकाऱ्याचे नाव'], ['grievance_address', 'तक्रार निवारण अधिकाऱ्याचा पत्ता', 'textarea'],
+  ['footer_text', 'फूटर मजकूर'],
+  ['social_facebook', 'Facebook लिंक', 'url'], ['social_instagram', 'Instagram लिंक', 'url'], ['social_youtube', 'YouTube लिंक', 'url'],
+  ['social_x', 'X (Twitter) लिंक', 'url'], ['social_whatsapp', 'WhatsApp चॅनल लिंक', 'url'],
+];
+if (Astro.request.method === 'POST') {
+  const { str } = await readForm(Astro.request);
+  const vals: Partial<Settings> = {};
+  for (const [k, , type] of fields) {
+    const v = str(k, 500);
+    if (type === 'url' && v && !isHttps(v)) return back(Astro.url, `${k}: लिंक https:// ने सुरू होणारी असावी.`, true);
+    vals[k] = v;
+  }
+  if (!vals.site_name || !vals.motto) return back(Astro.url, 'नाव आणि ब्रीदवाक्य आवश्यक आहे.', true);
+  await saveSettings(db, vals);
+  return back(Astro.url, 'सेटिंग्ज जतन केल्या. वेबसाइटवर लगेच दिसतील.');
+}
+const s = await getSettings(db);
+---
+<AdminLayout title="Website Settings">
+  <h2>Website Settings</h2>
+  <p><small>चौकटी कंसातील [मजकूर] हे placeholder आहेत – ते आमच्याबद्दल, संपर्क व संपादकीय धोरण पानांवर दिसतात. खरे तपशील भरा.</small></p>
+  <form method="post" class="card">
+    <div class="row">{fields.map(([k, label, type]) => (
+      <div class="f" style={type === 'textarea' ? 'grid-column:1/-1' : ''}><label for={k}>{label}</label>
+        {type === 'textarea' ? <textarea id={k} name={k} rows="2" maxlength="500">{s[k]}</textarea>
+          : <input id={k} name={k} type={type ?? 'text'} value={s[k]} maxlength="500" />}</div>))}
+    </div>
+    <button type="submit">जतन करा</button>
+  </form>
+</AdminLayout>

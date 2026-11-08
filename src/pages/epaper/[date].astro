@@ -1,0 +1,60 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDB, type Epaper } from '../../lib/db';
+import { fmtDay } from '../../lib/format';
+const date = Astro.params.date ?? '';
+const e = /^\d{4}-\d{2}-\d{2}$/.test(date) ? await getDB(Astro.locals).prepare(
+  `SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size FROM epapers WHERE edition_date = ? AND status = 'published'`)
+  .bind(date).first<Epaper>() : null;
+if (!e) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=300');
+const pdf = `/files/${e.pdf_key}`;
+---
+<Base title={`ई-पेपर ${fmtDay(e.edition_date)} – NEWS24 SHIVNERI`} description={`${e.title} – ${e.edition_name}, ${fmtDay(e.edition_date)}`}
+  image={e.cover_key ? `/files/${e.cover_key}` : undefined}>
+  <p class="crumbs"><a href="/">मुख्यपृष्ठ</a> › <a href="/epaper">ई-पेपर</a></p>
+  <h1 class="h-mid">{e.title} · {fmtDay(e.edition_date)} · {e.edition_name}</h1>
+  <div class="viewer-bar" id="viewer" data-pdf={pdf}>
+    <button class="btn alt" type="button" data-act="prev">← मागील</button>
+    <span>पान <input id="pg" type="number" min="1" value="1" aria-label="पान क्रमांक" /> / <span id="total">…</span></span>
+    <button class="btn alt" type="button" data-act="next">पुढील →</button>
+    <button class="btn alt" type="button" data-act="out" aria-label="लहान करा">−</button>
+    <button class="btn alt" type="button" data-act="in" aria-label="मोठे करा">+</button>
+    <a class="btn" href={pdf} download={`news24-shivneri-${e.edition_date}.pdf`}>डाउनलोड</a>
+  </div>
+  <div id="pdf-wrap"><canvas id="pdf-canvas"></canvas><p id="pdf-msg">ई-पेपर लोड होत आहे…</p></div>
+</Base>
+<script>
+  // pdf.js loads only on this page.
+  import * as pdfjs from 'pdfjs-dist';
+  import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  const bar = document.getElementById('viewer')!;
+  const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
+  const input = document.getElementById('pg') as HTMLInputElement;
+  const msg = document.getElementById('pdf-msg')!;
+  const wrap = document.getElementById('pdf-wrap')!;
+  let doc: any, page = 1, zoom = 1, busy = false;
+  async function render() {
+    if (busy) return; busy = true;
+    const p = await doc.getPage(page);
+    const fit = (wrap.clientWidth - 24) / p.getViewport({ scale: 1 }).width;
+    const vp = p.getViewport({ scale: fit * zoom * (window.devicePixelRatio || 1) });
+    canvas.width = vp.width; canvas.height = vp.height;
+    canvas.style.width = `${vp.width / (window.devicePixelRatio || 1)}px`;
+    await p.render({ canvasContext: canvas.getContext('2d')!, viewport: vp, canvas }).promise;
+    input.value = String(page); busy = false;
+  }
+  const go = (n: number) => { if (doc && n >= 1 && n <= doc.numPages) { page = n; render(); } };
+  bar.addEventListener('click', (ev) => {
+    const act = (ev.target as HTMLElement).closest('button')?.dataset.act;
+    if (act === 'prev') go(page - 1); else if (act === 'next') go(page + 1);
+    else if (act === 'in') { zoom = Math.min(4, zoom * 1.25); render(); }
+    else if (act === 'out') { zoom = Math.max(0.5, zoom / 1.25); render(); }
+  });
+  input.addEventListener('change', () => go(Number(input.value)));
+  pdfjs.getDocument({ url: bar.dataset.pdf! }).promise.then((d: any) => {
+    doc = d; document.getElementById('total')!.textContent = String(d.numPages); input.max = String(d.numPages);
+    msg.remove(); render();
+  }).catch((e: unknown) => { console.error('e-paper', e); msg.textContent = 'ई-पेपर उघडता आला नाही. कृपया डाउनलोड करून पहा.'; });
+</script>

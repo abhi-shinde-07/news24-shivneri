@@ -1,0 +1,73 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDB } from '../../lib/db';
+import { verifyPassword, hashPassword, destroyOtherSessions } from '../../lib/auth';
+import { newSecret, verifyTotp, otpauthUri } from '../../lib/totp';
+import { back, readForm } from '../../lib/admin';
+const db = getDB(Astro.locals);
+const me = Astro.locals.user!;
+const row = await db.prepare('SELECT password_hash, totp_secret, totp_enabled FROM users WHERE id = ?').bind(me.id)
+  .first<{ password_hash: string; totp_secret: string | null; totp_enabled: number }>();
+if (!row) return Astro.redirect('/admin/login');
+if (Astro.request.method === 'POST') {
+  const { str } = await readForm(Astro.request);
+  const action = str('action');
+  if (action === 'password') {
+    const cur = str('current', 200), next = str('new', 200), again = str('again', 200);
+    if (!(await verifyPassword(cur, row.password_hash))) return back(Astro.url, 'सध्याचा पासवर्ड चुकीचा आहे.', true);
+    if (next.length < 12) return back(Astro.url, 'नवीन पासवर्ड किमान १२ अक्षरांचा असावा.', true);
+    if (next !== again) return back(Astro.url, 'दोन्ही नवीन पासवर्ड जुळत नाहीत.', true);
+    if (next === cur) return back(Astro.url, 'नवीन पासवर्ड जुन्यापेक्षा वेगळा असावा.', true);
+    await db.prepare('UPDATE users SET password_hash = ? WHERE id = ?').bind(await hashPassword(next), me.id).first();
+    await destroyOtherSessions(db, Astro.request, me.id);
+    return back(Astro.url, 'पासवर्ड बदलला. इतर सर्व डिव्हाइसवरून लॉगआउट केले.');
+  }
+  if (action === 'totp-start') {
+    if (row.totp_enabled) return back(Astro.url, 'दुसरी पायरी आधीच चालू आहे.', true);
+    await db.prepare('UPDATE users SET totp_secret = ? WHERE id = ?').bind(newSecret(), me.id).first();
+    return back(Astro.url, 'Authenticator ॲपमध्ये खालील कोड जोडा आणि ६ अंकी कोड टाकून चालू करा.');
+  }
+  if (action === 'totp-enable') {
+    if (!row.totp_secret || !(await verifyTotp(row.totp_secret, str('code', 10)))) return back(Astro.url, 'कोड चुकीचा आहे. फोनमधील वेळ योग्य आहे का तपासा.', true);
+    await db.prepare('UPDATE users SET totp_enabled = 1 WHERE id = ?').bind(me.id).first();
+    return back(Astro.url, 'दुसरी पायरी (2-step login) चालू झाली. पुढील लॉगिनला कोड लागेल.');
+  }
+  if (action === 'totp-disable') {
+    if (!(await verifyPassword(str('current', 200), row.password_hash))) return back(Astro.url, 'पासवर्ड चुकीचा आहे.', true);
+    await db.prepare('UPDATE users SET totp_enabled = 0, totp_secret = NULL WHERE id = ?').bind(me.id).first();
+    return back(Astro.url, 'दुसरी पायरी बंद केली.');
+  }
+}
+const pending = !row.totp_enabled && row.totp_secret;
+---
+<AdminLayout title="सुरक्षा">
+  <h2>सुरक्षा / पासवर्ड</h2>
+  <div class="row">
+    <form method="post" class="card"><input type="hidden" name="action" value="password" />
+      <h3 style="margin-top:0">पासवर्ड बदला</h3>
+      <div class="f"><label for="c">सध्याचा पासवर्ड</label><input id="c" name="current" type="password" autocomplete="current-password" required /></div>
+      <div class="f"><label for="n">नवीन पासवर्ड (किमान १२ अक्षरे)</label><input id="n" name="new" type="password" minlength="12" autocomplete="new-password" required /></div>
+      <div class="f"><label for="a">नवीन पासवर्ड पुन्हा</label><input id="a" name="again" type="password" minlength="12" autocomplete="new-password" required /></div>
+      <button type="submit">पासवर्ड बदला</button>
+      <p><small>बदलल्यानंतर इतर सर्व डिव्हाइसवरून आपोआप लॉगआउट होईल.</small></p>
+    </form>
+    <div class="card">
+      <h3 style="margin-top:0">दुसरी पायरी (2-step login) <span class={`badge ${row.totp_enabled ? 'on' : 'off'}`}>{row.totp_enabled ? 'चालू' : 'बंद'}</span></h3>
+      <p>लॉगिन करताना पासवर्डसोबत फोनमधील Authenticator ॲपचा ६ अंकी कोड लागेल.</p>
+      {!row.totp_enabled && !pending && <form method="post"><input type="hidden" name="action" value="totp-start" /><button type="submit">सेटअप सुरू करा</button></form>}
+      {pending && (
+        <form method="post"><input type="hidden" name="action" value="totp-enable" />
+          <p>१. Google/Microsoft Authenticator ॲपमध्ये “Enter a setup key” निवडा आणि हा कोड टाका:</p>
+          <p><code style="font-size:1.1rem;background:#f4f4f5;padding:.3rem .5rem;user-select:all;word-break:break-all">{row.totp_secret!.match(/.{1,4}/g)!.join(' ')}</code></p>
+          <p><small>किंवा ही लिंक: <code style="word-break:break-all">{otpauthUri(row.totp_secret!, me.email)}</code></small></p>
+          <div class="f"><label for="code">२. ॲपमधील ६ अंकी कोड</label><input id="code" name="code" inputmode="numeric" pattern="[0-9 ]{6,7}" autocomplete="one-time-code" required /></div>
+          <button type="submit">चालू करा</button>
+        </form>)}
+      {!!row.totp_enabled && (
+        <form method="post"><input type="hidden" name="action" value="totp-disable" />
+          <div class="f"><label for="cp">बंद करण्यासाठी पासवर्ड</label><input id="cp" name="current" type="password" required /></div>
+          <button class="danger" type="submit" data-confirm="दुसरी पायरी बंद करायची?">बंद करा</button>
+        </form>)}
+    </div>
+  </div>
+</AdminLayout>

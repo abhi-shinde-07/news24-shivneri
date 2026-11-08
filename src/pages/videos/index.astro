@@ -1,0 +1,20 @@
+---
+import Base from '../../layouts/Base.astro';
+import Pager from '../../components/Pager.astro';
+import { getDB, getVideos } from '../../lib/db';
+import { pageFrom } from '../../lib/page';
+const page = pageFrom(Astro.url);
+const { videos, hasNext } = await getVideos(getDB(Astro.locals), page);
+if (page > 1 && videos.length === 0) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=120');
+---
+<Base title={`व्हिडिओ${page > 1 ? ` – पान ${page}` : ''} – NEWS24 SHIVNERI`} description="पुणे जिल्ह्यातील बातम्यांचे व्हिडिओ – NEWS24 SHIVNERI"
+  canonical={page > 1 ? `/videos?page=${page}` : '/videos'}>
+  <h1 class="section-head first">व्हिडिओ</h1>
+  {videos.length === 0 && <p class="deck">अद्याप व्हिडिओ प्रकाशित झालेले नाहीत.</p>}
+  <div class="vgrid">{videos.map((v) => (
+    <a class="vcard" href={`/videos/${v.id}`}>
+      <span class="vthumb"><img src={`https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`} alt="" loading="lazy" width="480" height="360" /><span class="play" aria-hidden="true">▶</span></span>
+      <b>{v.title}</b></a>))}</div>
+  <Pager page={page} hasNext={hasNext} base="/videos" />
+</Base>

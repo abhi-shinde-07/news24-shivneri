@@ -1,0 +1,33 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getDB, type Video } from '../../lib/db';
+import { fmtDate } from '../../lib/format';
+import { SITE } from '../../lib/page';
+const id = Number(Astro.params.id);
+const v = Number.isInteger(id) ? await getDB(Astro.locals).prepare(
+  `SELECT id, youtube_id, title, description, is_featured, published_at FROM videos WHERE id = ? AND status = 'published'`).bind(id).first<Video>() : null;
+if (!v) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=120');
+const thumb = `https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`;
+const ld = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'VideoObject', name: v.title, description: v.description || v.title,
+  thumbnailUrl: [thumb], uploadDate: v.published_at, embedUrl: `https://www.youtube-nocookie.com/embed/${v.youtube_id}`,
+  url: `${SITE}/videos/${v.id}`, inLanguage: 'mr',
+  publisher: { '@type': 'NewsMediaOrganization', name: 'NEWS24 SHIVNERI', logo: { '@type': 'ImageObject', url: `${SITE}/logo.png` } },
+}).replace(/</g, '\\u003c');
+---
+<Base title={`${v.title} – व्हिडिओ – NEWS24 SHIVNERI`} description={v.description?.slice(0, 160) || v.title} image={thumb} type="video.other">
+  <script slot="head" type="application/ld+json" set:html={ld} />
+  <article class="article-body">
+    <p class="crumbs"><a href="/">मुख्यपृष्ठ</a> › <a href="/videos">व्हिडिओ</a></p>
+    <h1 class="h-lead">{v.title}</h1>
+    <p class="byline">प्रकाशित: {fmtDate(v.published_at)}</p>
+    <div class="player">
+      <button type="button" data-yt={v.youtube_id} aria-label={`व्हिडिओ चालू करा: ${v.title}`}>
+        <img src={thumb} alt="" width="480" height="360" /><span class="play" aria-hidden="true">▶</span>
+      </button>
+    </div>
+    <noscript><p><a href={`https://www.youtube.com/watch?v=${v.youtube_id}`}>YouTube वर पहा</a></p></noscript>
+    {v.description && <p style="white-space:pre-line">{v.description}</p>}
+  </article>
+</Base>

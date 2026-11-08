@@ -1,0 +1,32 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDB } from '../lib/db';
+import { getSettings } from '../lib/settings';
+const s = await getSettings(getDB(Astro.locals), Astro.locals);
+const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s.contact_email);
+const tel = s.phone.replace(/[^\d+]/g, '');
+---
+<Base title="संपर्क – NEWS24 SHIVNERI" description="NEWS24 SHIVNERI शी संपर्क: बातमी, सुधारणा, जाहिरात आणि तक्रार निवारण.">
+  <article class="article-body page">
+    <h1 class="h-lead">संपर्क</h1>
+    <div class="contact-grid">
+      <section class="box">
+        <h2>संपादकीय कार्यालय</h2>
+        <p>संपादक: <b>{s.editor_name}</b></p>
+        <p>पत्ता: {s.address}</p>
+        <p>फोन: {tel.length >= 10 ? <a href={`tel:${tel}`}>{s.phone}</a> : s.phone}</p>
+        <p>ईमेल: {isEmail ? <a href={`mailto:${s.contact_email}`}>{s.contact_email}</a> : s.contact_email}</p>
+      </section>
+      <section class="box">
+        <h2>तक्रार निवारण अधिकारी</h2>
+        <p>नाव: <b>{s.grievance_name}</b></p>
+        <p>पत्ता: {s.grievance_address}</p>
+        <p>बातमीतील चूक, आक्षेप किंवा तक्रार असल्यास वरील ईमेलवर बातमीची लिंक आणि तपशील पाठवा. आम्ही १५ दिवसांत उत्तर देण्याचा प्रयत्न करतो.</p>
+      </section>
+    </div>
+    <h2>बातमी किंवा माहिती पाठवा</h2>
+    <p>तुमच्या भागातील घटना, फोटो किंवा माहिती आम्हाला ईमेलने पाठवा. प्रकाशनापूर्वी प्रत्येक माहितीची पडताळणी केली जाते.</p>
+    <h2>जाहिरात</h2>
+    <p>जाहिरातीसाठी वरील फोन/ईमेलवर संपर्क करा.</p>
+  </article>
+</Base>

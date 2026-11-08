@@ -1,21 +1,34 @@
 ---
+import '@fontsource/mukta/400.css';
+import '@fontsource/mukta/600.css';
+import '@fontsource/noto-serif-devanagari/700.css';
+import '@fontsource/noto-serif-devanagari/800.css';
 import '../styles/newspaper.css';
 import AdSlot from '../components/AdSlot.astro';
+import { getDB, getNavCategories } from '../lib/db';
+import { getSettings } from '../lib/settings';
+const db = getDB(Astro.locals);
+const s = await getSettings(db, Astro.locals);
+const cats = await getNavCategories(db);
 const {
-  title = 'NEWS24 SHIVNERI',
-  description = 'मराठी डिजिटल वृत्तपत्र – आजचे सत्य • उद्याची दिशा',
-  image = '/og-image.png', // pages with their own main photo pass it here
+  title = `${s.site_name} – ${s.motto}`,
+  description = s.seo_description,
+  image = s.seo_og_image || '/og-image.png', // pages with their own main photo pass it here
   type = 'website',
+  canonical, // defaults to the current path (query string dropped)
+  published, modified,
+  noindex = false,
 } = Astro.props;
-const motto = 'निर्भिड सत्याचा बुलंद आवाज';
-const ogImage = new URL(image, Astro.url).href;
-const ogUrl = new URL(Astro.url.pathname, Astro.url).href;
-const nav = [
-  ['मुख्यपृष्ठ','/'],['ताज्या बातम्या','/latest'],['राजकारण','/category/politics'],
-  ['सामाजिक','/category/social'],['शिक्षण','/category/education'],['शेती','/category/agriculture'],
-  ['व्यवसाय','/category/business'],['क्रीडा','/category/sports'],['मनोरंजन','/category/entertainment'],
-  ['फोटो','/photos'],['व्हिडिओ','/videos'],['ई-पेपर','/epaper'],
+const ogImage = new URL(image, Astro.site ?? Astro.url).href;
+const canonicalUrl = new URL(canonical ?? Astro.url.pathname, Astro.site ?? Astro.url).href;
+const path = Astro.url.pathname;
+const nav: [string, string][] = [
+  ['मुख्यपृष्ठ', '/'], ['ताज्या बातम्या', '/latest'],
+  ...cats.map((c) => [c.name_mr, `/category/${c.slug}`] as [string, string]),
+  ['फोटो', '/photos'], ['व्हिडिओ', '/videos'], ['ई-पेपर', '/epaper'],
 ];
+const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagram], ['YouTube', s.social_youtube],
+  ['X', s.social_x], ['WhatsApp', s.social_whatsapp]] as [string, string][]).filter(([, u]) => /^https:\/\//.test(u));
 ---
 <!doctype html>
 <html lang="mr">
@@ -24,43 +37,61 @@ const nav = [
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <link rel="canonical" href={canonicalUrl} />
+  {noindex && <meta name="robots" content="noindex, follow" />}
+  {s.google_verification && <meta name="google-site-verification" content={s.google_verification} />}
   <link rel="icon" type="image/png" href="/favicon.png" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  <meta property="og:site_name" content="NEWS24 SHIVNERI" />
+  <meta name="theme-color" content="#b3001b" />
+  <meta property="og:site_name" content={s.site_name} />
   <meta property="og:locale" content="mr_IN" />
   <meta property="og:type" content={type} />
   <meta property="og:title" content={title} />
   <meta property="og:description" content={description} />
-  <meta property="og:url" content={ogUrl} />
+  <meta property="og:url" content={canonicalUrl} />
   <meta property="og:image" content={ogImage} />
+  {published && <meta property="article:published_time" content={published} />}
+  {modified && <meta property="article:modified_time" content={modified} />}
   <meta name="twitter:card" content="summary_large_image" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Mukta:wght@400;600&family=Noto+Serif+Devanagari:wght@700;800&display=swap" rel="stylesheet" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImage} />
+  <link rel="alternate" type="application/rss+xml" title={s.site_name} href="/rss.xml" />
   <slot name="head" />
 </head>
 <body>
+  <a class="skip" href="#main">मुख्य मजकुराकडे जा</a>
   <div class="wrap">
-    <div class="dateline"><span id="today"></span><span>स्थानिक आवृत्ती</span></div>
+    <div class="dateline"><span id="today"></span><span>{s.edition} · पुणे जिल्हा</span></div>
     <header class="masthead">
-      <a href="/" class="logo"><img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" /></a>
-      <p class="tag">{motto}</p>
+      <a class="ear" href="/latest"><b>ताज्या बातम्या</b>पुणे जिल्ह्यातील प्रत्येक घडामोड</a>
+      <a class="ear right" href="/epaper"><b>आजचा ई-पेपर</b>वाचा व डाउनलोड करा →</a>
+      <a href="/" class="logo"><img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" fetchpriority="high" /></a>
+      <p class="tag">{s.motto}</p>
     </header>
-    <nav class="nav" aria-label="मुख्य मेनू"><ul>{nav.map(([t,h]) => <li><a href={h}>{t}</a></li>)}</ul></nav>
+    <nav class="nav" aria-label="मुख्य मेनू"><ul>{nav.map(([t, h]) =>
+      <li><a href={h} aria-current={(h === '/' ? path === '/' : path.startsWith(h)) ? 'page' : undefined}>{t}</a></li>)}</ul></nav>
     <AdSlot position="top" />
-    <main><slot /></main>
+    <main id="main"><slot /></main>
     <AdSlot position="bottom" />
     <footer class="footer">
       <div class="footer-brand">
         <img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" loading="lazy" />
-        <div><p class="tag">{motto}</p><p>© NEWS24 SHIVNERI</p></div>
+        <div><p class="tag">{s.motto}</p><p>पुणे जिल्ह्याचे मराठी डिजिटल वृत्तपत्र</p></div>
       </div>
-      <span><a href="/contact">संपर्क</a> · <a href="/about">आमच्याबद्दल</a> · <a href="/editorial-policy">संपादकीय धोरण</a> · <a href="/corrections">सुधारणा</a></span>
+      <nav class="footer-col" aria-label="विभाग">
+        <h2>विभाग</h2>
+        {cats.map((c) => <a href={`/category/${c.slug}`}>{c.name_mr}</a>)}
+      </nav>
+      <nav class="footer-col" aria-label="इतर दुवे">
+        <h2>NEWS24 SHIVNERI</h2>
+        <a href="/about">आमच्याबद्दल</a><a href="/contact">संपर्क</a><a href="/editorial-policy">संपादकीय धोरण</a>
+        <a href="/corrections">सुधारणा</a><a href="/epaper">ई-पेपर</a><a href="/photos">फोटो</a><a href="/videos">व्हिडिओ</a>
+        {social.map(([n, u]) => <a href={u} rel="noopener me" target="_blank">{n}</a>)}
+      </nav>
+      <p class="footer-bottom">{s.footer_text} · <a href="/sitemap.xml">साइटमॅप</a> · <a href="/rss.xml">RSS</a></p>
     </footer>
   </div>
-  <script is:inline>
-    document.getElementById('today').textContent =
-      new Date().toLocaleDateString('mr-IN', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  </script>
+  <script is:inline src="/js/site.js" defer></script>
 </body>
 </html>

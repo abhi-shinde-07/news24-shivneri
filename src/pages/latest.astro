@@ -1,11 +1,18 @@
 ---
 import Base from '../layouts/Base.astro';
-import Byline from '../components/Byline.astro';
+import Card from '../components/Card.astro';
+import Pager from '../components/Pager.astro';
 import { getDB, getLatest } from '../lib/db';
-const articles = await getLatest(getDB(Astro.locals));
+import { pageFrom } from '../lib/page';
+const page = pageFrom(Astro.url);
+const { articles, hasNext } = await getLatest(getDB(Astro.locals), page);
+if (page > 1 && articles.length === 0) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=60');
 ---
-<Base title="ताज्या बातम्या – NEWS24 SHIVNERI">
+<Base title={`ताज्या बातम्या${page > 1 ? ` – पान ${page}` : ''} – NEWS24 SHIVNERI`}
+  description="पुणे जिल्ह्यातील ताज्या मराठी बातम्या – NEWS24 SHIVNERI" canonical={page > 1 ? `/latest?page=${page}` : '/latest'}>
   <h1 class="section-head first">ताज्या बातम्या</h1>
   {articles.length === 0 && <p class="deck">अद्याप बातम्या प्रकाशित झालेल्या नाहीत.</p>}
-  {articles.map((a) => <div class="item"><h2 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h2><Byline a={a} /></div>)}
+  <div class="list">{articles.map((a) => <Card a={a} />)}</div>
+  <Pager page={page} hasNext={hasNext} base="/latest" />
 </Base>

@@ -2,33 +2,77 @@
 import Base from '../layouts/Base.astro';
 import AdSlot from '../components/AdSlot.astro';
 import Byline from '../components/Byline.astro';
-import { getDB, getHome } from '../lib/db';
+import Card from '../components/Card.astro';
+import { getDB, getHome, getCategoryBlocks, getFeaturedVideos, getLatestEpaper } from '../lib/db';
 import { mediaUrl } from '../lib/mediaUrl';
-const { lead, others, top, breaking } = await getHome(getDB(Astro.locals));
+import { fmtDay } from '../lib/format';
+const db = getDB(Astro.locals);
+const [{ lead, others, more, top, breaking }, blocks, videos, epaper] =
+  await Promise.all([getHome(db), getCategoryBlocks(db), getFeaturedVideos(db, 4), getLatestEpaper(db)]);
 Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+const ld = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'NewsMediaOrganization', name: 'NEWS24 SHIVNERI',
+  alternateName: 'NEWS24 शिवनेरी', url: 'https://www.news24shivneri.in/', logo: 'https://www.news24shivneri.in/logo.png',
+  slogan: 'निर्भिड सत्याचा बुलंद आवाज',
+}).replace(/</g, '\\u003c');
 ---
-<Base>
-  {breaking && <div class="breaking"><strong>ताज्या बातम्या</strong><a href={`/news/${breaking.id}`}>{breaking.headline}</a></div>}
+<Base canonical="/">
+  <script slot="head" type="application/ld+json" set:html={ld} />
+  {breaking.length > 0 && (
+    <div class="breaking"><strong>ब्रेकिंग</strong>
+      <ul>{breaking.map((b) => <li><a href={`/news/${b.id}`}>{b.headline}</a></li>)}</ul></div>)}
   <AdSlot position="main_headline" />
   {!lead && <p class="deck">अद्याप बातम्या प्रकाशित झालेल्या नाहीत.</p>}
   {lead && (
   <section class="front">
     <div class="col">
-      {lead.main_image_key && <img src={mediaUrl(lead.main_image_key)} alt={lead.main_image_caption ?? lead.headline} />}
+      {lead.main_image_key && <a href={`/news/${lead.id}`} tabindex="-1"><img class="lead-img" src={mediaUrl(lead.main_image_key)} alt={lead.main_image_caption ?? lead.headline} width="1200" height="675" fetchpriority="high" /></a>}
       {lead.main_image_caption && <p class="caption">{lead.main_image_caption}</p>}
+      <a class="kicker" href={`/category/${lead.category_slug}`}>{lead.category_name}</a>
       <h1 class="h-lead"><a href={`/news/${lead.id}`}>{lead.headline}</a></h1>
       {lead.subtitle && <p class="deck">{lead.subtitle}</p>}
       <Byline a={lead} />
+      {more.length > 0 && <div class="list lead-more">{more.map((a) => <Card a={a} tag="h3" />)}</div>}
     </div>
     <div class="col">
       <h2 class="section-head first">इतर महत्त्वाच्या बातम्या</h2>
-      {others.map((a) => <div class="item"><h3 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h3><Byline a={a} /></div>)}
+      {others.map((a) => (
+        <div class="item">
+          {a.main_image_key && <a href={`/news/${a.id}`} tabindex="-1" aria-hidden="true"><img class="mid-img" src={mediaUrl(a.main_image_key)} alt="" loading="lazy" width="400" height="225" /></a>}
+          <a class="kicker" href={`/category/${a.category_slug}`}>{a.category_name}</a>
+          <h3 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h3><Byline a={a} />
+        </div>))}
     </div>
     <div class="col">
       <AdSlot position="sidebar" />
       <h2 class="section-head first">आजच्या प्रमुख बातम्या</h2>
-      {top.map((a) => <div class="item"><h3 class="h-small"><a href={`/news/${a.id}`}>{a.headline}</a></h3></div>)}
+      <ol class="numbered">{top.map((a) => <li><h3 class="h-small"><a href={`/news/${a.id}`}>{a.headline}</a></h3></li>)}</ol>
+      {epaper && (
+        <div class="epaper-box">
+          <h2 class="section-head">आजचा ई-पेपर</h2>
+          <a href={`/epaper/${epaper.edition_date}`}>
+            {epaper.cover_key && <img src={`/files/${epaper.cover_key}`} alt={`ई-पेपर ${fmtDay(epaper.edition_date)}`} loading="lazy" width="300" height="420" />}
+            <b>{epaper.title}</b><span>{fmtDay(epaper.edition_date)} · {epaper.edition_name}</span>
+          </a>
+        </div>)}
     </div>
   </section>)}
   <AdSlot position="in_between" />
+  {blocks.length > 0 && (
+    <section class="blocks">
+      {blocks.map((b) => (
+        <div class="block">
+          <h2 class="section-head"><a href={`/category/${b.slug}`}>{b.name} <span aria-hidden="true">›</span></a></h2>
+          {b.items[0]?.main_image_key && <a href={`/news/${b.items[0].id}`} tabindex="-1" aria-hidden="true"><img class="mid-img" src={mediaUrl(b.items[0].main_image_key)} alt="" loading="lazy" width="400" height="225" /></a>}
+          {b.items.map((a, i) => <div class="item"><h3 class={i === 0 ? 'h-mid' : 'h-small'}><a href={`/news/${a.id}`}>{a.headline}</a></h3>{i === 0 && a.location_label && <p class="byline">{a.location_label}</p>}</div>)}
+        </div>))}
+    </section>)}
+  {videos.length > 0 && (
+    <section>
+      <h2 class="section-head"><a href="/videos">व्हिडिओ <span aria-hidden="true">›</span></a></h2>
+      <div class="vgrid">{videos.map((v) => (
+        <a class="vcard" href={`/videos/${v.id}`}>
+          <span class="vthumb"><img src={`https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`} alt="" loading="lazy" width="480" height="360" /><span class="play" aria-hidden="true">▶</span></span>
+          <b>{v.title}</b></a>))}</div>
+    </section>)}
 </Base>

@@ -1,0 +1,20 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDB, getAllCorrections } from '../lib/db';
+import { fmtDate } from '../lib/format';
+const rows = await getAllCorrections(getDB(Astro.locals));
+Astro.response.headers.set('Cache-Control', 'public, max-age=300');
+---
+<Base title="सुधारणा – NEWS24 SHIVNERI" description="NEWS24 SHIVNERI ने प्रकाशित बातम्यांमध्ये केलेल्या सर्व सुधारणा.">
+  <article class="article-body page">
+    <h1 class="h-lead">सुधारणा</h1>
+    <p class="deck">आमच्या बातम्यांमधील चुका आम्ही सार्वजनिकरित्या दुरुस्त करतो. नवीन सुधारणा सर्वात वर.</p>
+    {rows.length === 0 && <p>अद्याप कोणतीही सुधारणा नाही.</p>}
+    {rows.map((r) => (
+      <div class="correction">
+        <p class="byline"><time datetime={r.created_at}>{fmtDate(r.created_at)}</time></p>
+        <h2 class="h-small"><a href={`/news/${r.article_id}`}>{r.headline}</a></h2>
+        <p>{r.note}</p>
+      </div>))}
+  </article>
+</Base>

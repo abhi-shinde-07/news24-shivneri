@@ -1,9 +1,10 @@
+import { env } from 'cloudflare:workers';
 export type R2 = {
   put(key: string, value: Uint8Array, o?: unknown): Promise<unknown>;
   get(key: string): Promise<{ body: ReadableStream; httpEtag: string; httpMetadata?: { contentType?: string } } | null>;
   delete(key: string): Promise<void>;
 };
-export const getBucket = (locals: any): R2 => locals.runtime.env.MEDIA;
+export const getBucket = (_locals?: any): R2 => (env as any).MEDIA;
 export const MAX_UPLOAD = 2.5 * 1024 * 1024;
 export const KEY_RE = /^img\/\d{4}\/\d{2}\/[a-z0-9]+\.(webp|jpg|png)$/;
 

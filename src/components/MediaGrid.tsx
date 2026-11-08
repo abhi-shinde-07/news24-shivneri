@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-type M = { id: number; key: string; filename: string | null; size: number };
+type M = { id: number; key: string; filename: string | null; size: number; in_gallery?: number; caption?: string | null };
 
 // Shrink in the browser first (max 1600px, WebP) so R2 storage lasts longer.
 async function compress(file: File): Promise<Blob> {
@@ -45,6 +45,13 @@ export default function MediaGrid({ onSelect, allowDelete = false }: { onSelect?
     if (!res.ok) setMsg((await res.json().catch(() => ({}))).error ?? 'त्रुटी.'); else load();
   }
 
+  async function gallery(m: M, in_gallery: boolean, caption: string) {
+    const res = await fetch(`/api/admin/media/${m.id}`, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ in_gallery, caption }) });
+    if (!res.ok) setMsg('जतन करता आले नाही.');
+    else setItems((xs) => xs.map((x) => (x.id === m.id ? { ...x, in_gallery: in_gallery ? 1 : 0, caption } : x)));
+  }
+
   return (
     <div>
       <p><input type="file" accept="image/jpeg,image/png,image/webp" multiple disabled={busy} onChange={(e) => upload(e.target.files)} />
@@ -57,7 +64,14 @@ export default function MediaGrid({ onSelect, allowDelete = false }: { onSelect?
             <button type="button" className="thumb" onClick={() => onSelect?.(m)} disabled={!onSelect} style={{ width: '100%', cursor: onSelect ? 'pointer' : 'default' }}>
               <img src={`/media/${m.key}`} alt={m.filename ?? ''} loading="lazy" /><span>{(m.size / 1024).toFixed(0)} KB</span>
             </button>
-            {allowDelete && <button type="button" className="sec" style={{ width: '100%', padding: '.2rem' }} onClick={() => del(m)}>हटवा</button>}
+            {allowDelete && <>
+              <label className="chk" style={{ fontSize: '.8rem' }}>
+                <input type="checkbox" checked={!!m.in_gallery} onChange={(e) => gallery(m, e.target.checked, m.caption ?? '')} /> फोटो गॅलरीत दाखवा</label>
+              {!!m.in_gallery && <input defaultValue={m.caption ?? ''} placeholder="कॅप्शन" aria-label="कॅप्शन" maxLength={300}
+                style={{ width: '100%', boxSizing: 'border-box', fontSize: '.8rem', padding: '.2rem' }}
+                onBlur={(e) => e.target.value !== (m.caption ?? '') && gallery(m, true, e.target.value)} />}
+              <button type="button" className="sec" style={{ width: '100%', padding: '.2rem' }} onClick={() => del(m)}>हटवा</button>
+            </>}
           </div>
         ))}
       </div>

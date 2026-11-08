@@ -1,0 +1,16 @@
+---
+import Byline from './Byline.astro';
+import { mediaUrl } from '../lib/mediaUrl';
+// List item with a small photo (when the article has one).
+const { a, tag = 'h2', showCat = true } = Astro.props;
+const H = tag;
+---
+<div class="item card">
+  {a.main_image_key && <a href={`/news/${a.id}`} class="thumb" tabindex="-1" aria-hidden="true">
+    <img src={mediaUrl(a.main_image_key)} alt="" loading="lazy" decoding="async" width="160" height="107" /></a>}
+  <div>
+    {showCat && <a class="kicker" href={`/category/${a.category_slug}`}>{a.category_name}</a>}
+    <H class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></H>
+    <Byline a={a} />
+  </div>
+</div>

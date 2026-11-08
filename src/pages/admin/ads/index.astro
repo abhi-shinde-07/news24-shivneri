@@ -1,0 +1,44 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getDB } from '../../../lib/db';
+import { mediaUrl } from '../../../lib/mediaUrl';
+import { POSITION_LABEL, type Position } from '../../../lib/ads';
+import { back, readForm } from '../../../lib/admin';
+const db = getDB(Astro.locals);
+if (Astro.request.method === 'POST') {
+  const { str, int } = await readForm(Astro.request);
+  const id = int('id');
+  if (str('action') === 'delete') {
+    await db.prepare('DELETE FROM ads WHERE id = ?').bind(id).first();
+    return back(Astro.url, 'जाहिरात हटवली. (५ मिनिटांत वेबसाइटवरून जाईल)');
+  }
+  if (str('action') === 'toggle') {
+    await db.prepare(`UPDATE ads SET status = CASE status WHEN 'active' THEN 'inactive' ELSE 'active' END WHERE id = ?`).bind(id).first();
+    return back(Astro.url, 'स्थिती बदलली. (५ मिनिटांत वेबसाइटवर दिसेल)');
+  }
+}
+const ads = (await db.prepare(
+  `SELECT id, advertiser, image_key, click_url, position, start_date, end_date, status, click_count,
+     (status = 'active' AND start_date <= date('now') AND end_date >= date('now')) AS live FROM ads ORDER BY id DESC`)
+  .all<{ id: number; advertiser: string; image_key: string; click_url: string; position: Position; start_date: string; end_date: string; status: string; click_count: number; live: number }>()).results;
+---
+<AdminLayout title="जाहिरात व्यवस्थापन">
+  <h2>जाहिरात व्यवस्थापन</h2>
+  <p><a class="button" href="/admin/ads/new">+ नवीन जाहिरात</a></p>
+  <p><small>फक्त क्लिक मोजले जातात (impressions नाहीत). एकाच वाचकाचे एका तासातील पुन्हा क्लिक आणि bots मोजले जात नाहीत. बदल वेबसाइटवर ५ मिनिटांत दिसतात.</small></p>
+  <div class="tablewrap"><table><thead><tr><th>प्रिव्ह्यू</th><th>जाहिरातदार</th><th>जागा</th><th>कालावधी</th><th>स्थिती</th><th>क्लिक</th><th></th></tr></thead><tbody>
+    {ads.length === 0 && <tr><td colspan="7">अद्याप जाहिरात नाही.</td></tr>}
+    {ads.map((a) => <tr>
+      <td><img src={mediaUrl(a.image_key)} alt="" style="width:110px;max-height:70px;object-fit:contain" loading="lazy" /></td>
+      <td><b>{a.advertiser}</b><br /><small><a href={a.click_url} target="_blank" rel="noopener">{a.click_url}</a></small></td>
+      <td>{POSITION_LABEL[a.position]}</td><td>{a.start_date} ते {a.end_date}</td>
+      <td><span class={`badge ${a.live ? 'on' : 'off'}`}>{a.live ? 'चालू' : a.status === 'inactive' ? 'बंद' : 'कालावधीबाहेर'}</span></td>
+      <td>{a.click_count}</td>
+      <td style="white-space:nowrap"><a class="small" href={`/admin/ads/${a.id}`}>संपादित</a>
+        <form method="post" class="inline"><input type="hidden" name="id" value={a.id} /><input type="hidden" name="action" value="toggle" />
+          <button class="sec small" type="submit">{a.status === 'active' ? 'बंद करा' : 'चालू करा'}</button></form>
+        <form method="post" class="inline"><input type="hidden" name="id" value={a.id} /><input type="hidden" name="action" value="delete" />
+          <button class="danger small" type="submit" data-confirm="ही जाहिरात हटवायची?">हटवा</button></form></td>
+    </tr>)}
+  </tbody></table></div>
+</AdminLayout>

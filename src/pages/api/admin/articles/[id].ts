@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getDB } from '../../../../lib/db';
-import { json, nowIso, parseArticle } from '../../../../lib/articles';
+import { deleteArticle, json, nowIso, parseArticle } from '../../../../lib/articles';
 
 export const PUT: APIRoute = async ({ request, locals, params }) => {
   const db = getDB(locals);
@@ -26,4 +26,9 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
     .bind(d.headline, d.subtitle, d.body_html, d.category_id, d.location_label, d.byline, d.source,
       d.image_credit, d.main_image_key, d.main_image_caption, d.is_featured, d.is_breaking, d.status, publishedAt, now, id).first();
   return json({ id });
+};
+
+export const DELETE: APIRoute = async ({ locals, params }) => {
+  const ok = await deleteArticle(getDB(locals), Number(params.id));
+  return ok ? json({ ok: true }) : json({ error: 'बातमी सापडली नाही.' }, 404);
 };

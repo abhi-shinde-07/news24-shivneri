@@ -1,0 +1,28 @@
+---
+import Base from '../layouts/Base.astro';
+import Pager from '../components/Pager.astro';
+import { getDB } from '../lib/db';
+import { mediaUrl } from '../lib/mediaUrl';
+import { pageFrom } from '../lib/page';
+const PER = 24;
+const page = pageFrom(Astro.url);
+const rows = (await getDB(Astro.locals).prepare(
+  'SELECT id, key, caption FROM media WHERE in_gallery = 1 ORDER BY id DESC LIMIT ? OFFSET ?')
+  .bind(PER + 1, (page - 1) * PER).all<{ id: number; key: string; caption: string | null }>()).results;
+const photos = rows.slice(0, PER);
+if (page > 1 && photos.length === 0) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=300');
+---
+<Base title={`फोटो गॅलरी${page > 1 ? ` – पान ${page}` : ''} – NEWS24 SHIVNERI`} description="पुणे जिल्ह्यातील घडामोडींची छायाचित्रे – NEWS24 SHIVNERI"
+  canonical={page > 1 ? `/photos?page=${page}` : '/photos'}>
+  <h1 class="section-head first">फोटो गॅलरी</h1>
+  {photos.length === 0 && <p class="deck">अद्याप फोटो नाहीत.</p>}
+  <div class="pgrid">{photos.map((p) => (
+    <figure>
+      <a href={mediaUrl(p.key)} data-lightbox data-caption={p.caption ?? ''}>
+        <img src={mediaUrl(p.key)} alt={p.caption ?? 'छायाचित्र'} loading="lazy" decoding="async" width="400" height="300" /></a>
+      {p.caption && <figcaption>{p.caption}</figcaption>}
+    </figure>))}</div>
+  <Pager page={page} hasNext={rows.length > PER} base="/photos" />
+  <dialog id="lightbox" aria-label="छायाचित्र"><img alt="" /><p></p></dialog>
+</Base>

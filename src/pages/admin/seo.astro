@@ -1,0 +1,41 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDB } from '../../lib/db';
+import { mediaUrl } from '../../lib/mediaUrl';
+import { KEY_RE } from '../../lib/media';
+import { getSettings, saveSettings } from '../../lib/settings';
+import { back, readForm } from '../../lib/admin';
+const db = getDB(Astro.locals);
+if (Astro.request.method === 'POST') {
+  const { str } = await readForm(Astro.request);
+  const desc = str('seo_description', 300);
+  const og = str('seo_og_image', 200);
+  // Accept either the full meta tag or just the content value from Search Console.
+  const ver = (str('google_verification', 300).match(/content=["']([^"']+)["']/)?.[1] ?? str('google_verification', 300)).replace(/[^\w\-]/g, '');
+  if (!desc) return back(Astro.url, 'Meta description लिहा.', true);
+  if (og !== '/og-image.png' && !(KEY_RE.test(og.replace(/^\/media\//, '')) && og.startsWith('/media/')))
+    return back(Astro.url, 'OG प्रतिमा निवडा.', true);
+  await saveSettings(db, { seo_description: desc, seo_og_image: og, google_verification: ver });
+  return back(Astro.url, 'SEO सेटिंग्ज जतन केल्या.');
+}
+const s = await getSettings(db);
+const media = (await db.prepare('SELECT key FROM media ORDER BY id DESC LIMIT 60').all<{ key: string }>()).results;
+---
+<AdminLayout title="SEO Settings">
+  <h2>SEO Settings</h2>
+  <form method="post" class="card">
+    <div class="f"><label for="d">Default meta description (मुख्यपृष्ठ व इतर पानांसाठी)</label>
+      <textarea id="d" name="seo_description" rows="3" maxlength="300" required>{s.seo_description}</textarea><small>१५०–१६० अक्षरे योग्य.</small></div>
+    <div class="f"><label for="g">Google Search Console verification</label>
+      <input id="g" name="google_verification" value={s.google_verification} placeholder='<meta name="google-site-verification" content="..."> किंवा फक्त content' />
+      <small>Search Console → HTML tag पद्धत → पूर्ण टॅग येथे पेस्ट करा.</small></div>
+    <div class="f"><label>Default OG प्रतिमा (WhatsApp/Facebook वर शेअर करताना; बातमीचे स्वतःचे छायाचित्र असल्यास ते वापरले जाते)</label>
+      <div class="pick">
+        <label><input type="radio" name="seo_og_image" value="/og-image.png" checked={s.seo_og_image === '/og-image.png'} /><img src="/og-image.png" alt="" />लोगो (मूळ)</label>
+        {media.map((m) => <label><input type="radio" name="seo_og_image" value={mediaUrl(m.key)} checked={s.seo_og_image === mediaUrl(m.key)} /><img src={mediaUrl(m.key)} alt="" loading="lazy" /></label>)}
+      </div><small>OG प्रतिमा 1200×630 आकाराची असावी.</small></div>
+    <button type="submit">जतन करा</button>
+  </form>
+  <h3>उपयुक्त लिंक</h3>
+  <ul><li><a href="/sitemap.xml" target="_blank">/sitemap.xml</a></li><li><a href="/news-sitemap.xml" target="_blank">/news-sitemap.xml</a> (४८ तासांतील बातम्या)</li><li><a href="/robots.txt" target="_blank">/robots.txt</a></li><li><a href="/rss.xml" target="_blank">/rss.xml</a></li></ul>
+</AdminLayout>

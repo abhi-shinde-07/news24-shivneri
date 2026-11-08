@@ -1,27 +1,40 @@
 ---
+import { getDB } from '../lib/db';
+import { getUsage } from '../lib/usage';
+import { flash } from '../lib/admin';
 const { title = 'Dashboard' } = Astro.props;
 const user = Astro.locals.user;
+const usage = await getUsage(getDB(Astro.locals));
+const { ok, err } = flash(Astro.url);
 const menu = [
-  ['Dashboard', '/admin', true], ['बातमी व्यवस्थापन', '/admin/articles', true], ['जाहिरात व्यवस्थापन', '', false],
-  ['Media Library', '/admin/media', true], ['व्हिडिओ व्यवस्थापन', '', false], ['ई-पेपर व्यवस्थापन', '', false],
-  ['Categories', '', false], ['SEO Settings', '', false], ['Website Settings', '', false],
+  ['Dashboard', '/admin'], ['बातमी व्यवस्थापन', '/admin/articles'], ['जाहिरात व्यवस्थापन', '/admin/ads'],
+  ['Media Library', '/admin/media'], ['व्हिडिओ व्यवस्थापन', '/admin/videos'], ['ई-पेपर व्यवस्थापन', '/admin/epaper'],
+  ['Categories', '/admin/categories'], ['SEO Settings', '/admin/seo'], ['Website Settings', '/admin/settings'],
+  ['सुरक्षा / पासवर्ड', '/admin/security'],
 ] as const;
+const path = Astro.url.pathname;
 ---
 <!doctype html>
 <html lang="mr"><head>
 <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" /><title>{title} – NEWS24 SHIVNERI Admin</title>
-<style>
+<link rel="icon" type="image/png" href="/favicon.png" />
+<!-- is:global so the styles also reach the admin pages and React editors rendered inside the slot -->
+<style is:global>
   body{margin:0;font-family:system-ui,'Noto Sans Devanagari',sans-serif;background:#f4f4f5;color:#18181b;display:flex;min-height:100vh}
   aside{width:230px;background:#18181b;color:#e4e4e7;padding:1rem;flex-shrink:0}
-  aside h1{font-size:1rem;margin:0 0 1rem;color:#fff} aside a,aside span{display:block;padding:.45rem .6rem;border-radius:4px;color:inherit;text-decoration:none;font-size:.95rem}
-  aside a:hover,aside a.on{background:#3f3f46} aside span{opacity:.45}
-  main{flex:1;padding:1.5rem;max-width:1000px} h2{margin-top:0}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin:1rem 0}
-  .card{background:#fff;border:1px solid #d4d4d8;border-radius:6px;padding:1rem} .card b{font-size:1.8rem;display:block}
-  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #d4d4d8} th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid #e4e4e7;font-size:.92rem}
-  button{font:inherit;padding:.5rem .9rem;border:0;border-radius:4px;background:#b3001b;color:#fff;cursor:pointer} .link{background:none;color:#e4e4e7;padding:.45rem .6rem;text-align:left;width:100%}
+  aside .brand{display:flex;gap:.6rem;align-items:center;margin:0 0 1rem;color:#fff;font-weight:700;font-size:.95rem;line-height:1.3}
+  aside .brand img{width:44px;height:44px;border-radius:6px} aside a{display:block;padding:.45rem .6rem;border-radius:4px;color:inherit;text-decoration:none;font-size:.95rem}
+  aside a:hover,aside a.on{background:#3f3f46} aside .site{margin-top:.6rem;border:1px solid #3f3f46}
+  main{flex:1;padding:1.5rem;max-width:1100px;min-width:0} h2{margin-top:0} a{color:#b3001b}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin:1rem 0}
+  .card{background:#fff;border:1px solid #d4d4d8;border-radius:6px;padding:1rem} .card>b{font-size:1.8rem;display:block} a.card{text-decoration:none;color:inherit}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #d4d4d8} th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid #e4e4e7;font-size:.92rem;vertical-align:middle}
+  .tablewrap{overflow-x:auto}
+  button,.button{font:inherit;padding:.5rem .9rem;border:0;border-radius:4px;background:#b3001b;color:#fff;cursor:pointer;text-decoration:none;display:inline-block} .link{background:none;color:#e4e4e7;padding:.45rem .6rem;text-align:left;width:100%}
+  .danger{background:#fff;color:#b3001b;border:1px solid #b3001b} .small{padding:.25rem .6rem;font-size:.85rem}
   .f{margin:.7rem 0}.f label{display:block;font-size:.9rem;margin-bottom:.25rem}.f input,.f select,.f textarea{width:100%;box-sizing:border-box;padding:.5rem;border:1px solid #a1a1aa;border-radius:4px;font:inherit;background:#fff}
+  .f small{color:#52525b}
   .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.chk{display:flex;gap:.4rem;align-items:center;font-size:.95rem}
   .toolbar{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem}.tb{background:#fff;color:#18181b;border:1px solid #a1a1aa;padding:.3rem .6rem;font-size:.85rem}.tb.act{background:#18181b;color:#fff}
   .ProseMirror{min-height:320px;border:1px solid #a1a1aa;border-radius:4px;background:#fff;padding:.8rem 1rem;font-size:1.1rem;line-height:1.8;outline:none}.ProseMirror:focus{border-color:#b3001b}
@@ -30,13 +43,50 @@ const menu = [
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50}.modal-body{background:#fff;width:min(94vw,900px);max-height:86vh;overflow:auto;padding:1rem;border-radius:6px}
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}.thumb{border:1px solid #d4d4d8;background:#fff;padding:0;cursor:pointer;color:inherit;text-align:left;font-size:.75rem;border-radius:4px;overflow:hidden}
   .thumb img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.thumb span{display:block;padding:.25rem .4rem}.ProseMirror img{max-width:100%}.ProseMirror figure{margin:.8rem 0}.ProseMirror figcaption{font-size:.85rem;color:#52525b}
-  @media(max-width:700px){body{flex-direction:column}aside{width:auto}}
+  .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.5rem;max-height:300px;overflow:auto;background:#fff;border:1px solid #d4d4d8;padding:.5rem;border-radius:4px}
+  .pick label{display:block;cursor:pointer;font-size:.75rem}.pick img{width:100%;aspect-ratio:4/3;object-fit:cover;border:3px solid transparent;border-radius:4px}.pick input{position:absolute;opacity:0}.pick input:checked+img{border-color:#b3001b}
+  .msg{padding:.6rem .9rem;border-radius:4px;margin:0 0 1rem}.msg.ok{background:#dcfce7;color:#14532d}.msg.err{background:#fee2e2;color:#7f1d1d}
+  .warn{background:#fef3c7;color:#78350f;padding:.6rem .9rem;border-radius:4px;margin:0 0 1rem}.warn.red{background:#fee2e2;color:#7f1d1d}
+  .badge{display:inline-block;font-size:.75rem;padding:.1rem .45rem;border-radius:9px;background:#e4e4e7}.badge.on{background:#dcfce7;color:#14532d}.badge.off{background:#fee2e2;color:#7f1d1d}
+  .meter{height:10px;background:#e4e4e7;border-radius:5px;overflow:hidden;margin:.4rem 0}.meter i{display:block;height:100%;background:#16a34a}.meter i.w{background:#d97706}.meter i.r{background:#dc2626}
+  .inline{display:inline}
+  @media(max-width:760px){body{flex-direction:column}aside{width:auto}aside nav{display:flex;flex-wrap:wrap;gap:.2rem}main{padding:1rem}}
 </style></head>
-<body>
+<body data-usage={usage.pct.toFixed(1)}>
 <aside>
-  <h1>NEWS24 SHIVNERI<br />ADMIN</h1>
-  {menu.map(([t, h, on]) => on ? <a class={Astro.url.pathname === h || (h !== '/admin' && Astro.url.pathname.startsWith(h)) ? 'on' : ''} href={h}>{t}</a> : <span title="पुढील टप्प्यात">{t}</span>)}
+  <div class="brand"><img src="/apple-touch-icon.png" alt="" />NEWS24 SHIVNERI<br />ADMIN</div>
+  <nav>
+    {menu.map(([t, h]) => <a class={path === h || (h !== '/admin' && path.startsWith(h)) ? 'on' : ''} href={h}>{t}</a>)}
+    <a class="site" href="/" target="_blank" rel="noopener">वेबसाइट पहा ↗</a>
+  </nav>
   <form method="post" action="/admin/logout" style="margin-top:1rem"><button class="link" type="submit">Logout ({user?.name})</button></form>
 </aside>
-<main><slot /></main>
+<main>
+  {usage.pct >= 80 && <p class="warn red" role="alert"><b>सावधान:</b> मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. पुढील अपलोड/बदल केल्यास Cloudflare चे सशुल्क वापर सुरू होऊ शकते. <a href="/admin">तपशील</a></p>}
+  {usage.pct >= 70 && usage.pct < 80 && <p class="warn">मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. <a href="/admin">तपशील</a></p>}
+  {ok && <p class="msg ok" role="status">{ok}</p>}
+  {err && <p class="msg err" role="alert">{err}</p>}
+  <slot />
+</main>
+<script is:inline>
+  // Above 80% of a free limit, every upload or save asks for confirmation first.
+  (function () {
+    if (Number(document.body.dataset.usage) < 80) return;
+    var text = 'मोफत मर्यादेचा ८०% पेक्षा जास्त वापर झाला आहे. पुढे गेल्यास Cloudflare चे सशुल्क वापर सुरू होऊ शकते (खर्चाची कमाल मर्यादा नाही). तरीही पुढे जायचे?';
+    document.addEventListener('submit', function (e) {
+      if (e.target.method === 'post' && !e.target.closest('[action="/admin/logout"]') && !confirm(text)) e.preventDefault();
+    }, true);
+    var f = window.fetch;
+    window.fetch = function (u, o) {
+      var m = (o && o.method || 'GET').toUpperCase();
+      if (m !== 'GET' && String(u).indexOf('/api/admin') === 0 && !confirm(text)) return Promise.reject(new Error('cancelled'));
+      return f.apply(this, arguments);
+    };
+  })();
+  // Confirm before destructive buttons.
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-confirm]');
+    if (b && !confirm(b.getAttribute('data-confirm'))) e.preventDefault();
+  });
+</script>
 </body></html>

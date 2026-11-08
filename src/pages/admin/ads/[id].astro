@@ -1,0 +1,60 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getDB } from '../../../lib/db';
+import { mediaUrl } from '../../../lib/mediaUrl';
+import { POSITIONS, POSITION_LABEL } from '../../../lib/ads';
+import { KEY_RE } from '../../../lib/media';
+import { readForm, isDate, isHttps } from '../../../lib/admin';
+const db = getDB(Astro.locals);
+const isNew = Astro.params.id === 'new';
+const id = Number(Astro.params.id);
+type Ad = { advertiser: string; image_key: string; click_url: string; position: string; start_date: string; end_date: string; status: string };
+let ad: Ad | null = isNew
+  ? { advertiser: '', image_key: '', click_url: 'https://', position: 'sidebar', start_date: new Date().toISOString().slice(0, 10),
+      end_date: new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10), status: 'active' }
+  : Number.isInteger(id) ? await db.prepare('SELECT advertiser, image_key, click_url, position, start_date, end_date, status FROM ads WHERE id = ?').bind(id).first<Ad>() : null;
+if (!ad) return new Response('जाहिरात सापडली नाही', { status: 404 });
+let error = '';
+if (Astro.request.method === 'POST') {
+  const { str } = await readForm(Astro.request);
+  const d: Ad = { advertiser: str('advertiser', 120), image_key: str('image_key', 200), click_url: str('click_url', 500),
+    position: str('position', 20), start_date: str('start_date', 10), end_date: str('end_date', 10), status: str('status', 10) === 'inactive' ? 'inactive' : 'active' };
+  ad = d;
+  if (!d.advertiser) error = 'जाहिरातदाराचे नाव लिहा.';
+  else if (!KEY_RE.test(d.image_key) || !(await db.prepare('SELECT id FROM media WHERE key = ?').bind(d.image_key).first())) error = 'Media Library मधून प्रतिमा निवडा.';
+  else if (!isHttps(d.click_url)) error = 'क्लिक URL https:// ने सुरू होणारी असावी.';
+  else if (!(POSITIONS as readonly string[]).includes(d.position)) error = 'जागा निवडा.';
+  else if (!isDate(d.start_date) || !isDate(d.end_date)) error = 'तारखा योग्य नाहीत.';
+  else if (d.end_date < d.start_date) error = 'शेवटची तारीख सुरुवातीच्या तारखेनंतर असावी.';
+  if (!error) {
+    const vals = [d.advertiser, d.image_key, d.click_url, d.position, d.start_date, d.end_date, d.status];
+    if (isNew) await db.prepare('INSERT INTO ads (advertiser, image_key, click_url, position, start_date, end_date, status) VALUES (?,?,?,?,?,?,?)').bind(...vals).first();
+    else await db.prepare('UPDATE ads SET advertiser=?, image_key=?, click_url=?, position=?, start_date=?, end_date=?, status=? WHERE id=?').bind(...vals, id).first();
+    return Astro.redirect('/admin/ads?ok=' + encodeURIComponent('जाहिरात जतन केली. (५ मिनिटांत वेबसाइटवर दिसेल)'), 303);
+  }
+}
+const media = (await db.prepare('SELECT key, filename FROM media ORDER BY id DESC LIMIT 120').all<{ key: string; filename: string | null }>()).results;
+---
+<AdminLayout title={isNew ? 'नवीन जाहिरात' : 'जाहिरात संपादित करा'}>
+  <p><a href="/admin/ads">← जाहिराती</a></p>
+  <h2>{isNew ? 'नवीन जाहिरात' : 'जाहिरात संपादित करा'}</h2>
+  {error && <p class="msg err" role="alert">{error}</p>}
+  <form method="post">
+    <div class="row">
+      <div class="f"><label for="advertiser">जाहिरातदाराचे नाव</label><input id="advertiser" name="advertiser" value={ad.advertiser} required maxlength="120" /></div>
+      <div class="f"><label for="click_url">क्लिक URL (https only)</label><input id="click_url" name="click_url" type="url" value={ad.click_url} required pattern="https://.+" /></div>
+    </div>
+    <div class="row">
+      <div class="f"><label for="position">जागा</label><select id="position" name="position">{POSITIONS.map((p) => <option value={p} selected={ad!.position === p}>{POSITION_LABEL[p]}</option>)}</select></div>
+      <div class="f"><label for="start_date">सुरुवात</label><input id="start_date" name="start_date" type="date" value={ad.start_date} required /></div>
+      <div class="f"><label for="end_date">शेवट</label><input id="end_date" name="end_date" type="date" value={ad.end_date} required /></div>
+      <div class="f"><label for="status">स्थिती</label><select id="status" name="status"><option value="active" selected={ad.status === 'active'}>चालू</option><option value="inactive" selected={ad.status === 'inactive'}>बंद</option></select></div>
+    </div>
+    <div class="f"><label>प्रतिमा (Media Library मधून निवडा; नवीन प्रतिमा आधी <a href="/admin/media" target="_blank">Media Library</a> मध्ये अपलोड करा)</label>
+      {media.length === 0 ? <p>Media Library रिकामी आहे.</p> : (
+      <div class="pick">{media.map((m) => <label><input type="radio" name="image_key" value={m.key} checked={ad!.image_key === m.key} required />
+        <img src={mediaUrl(m.key)} alt="" loading="lazy" />{(m.filename ?? '').slice(0, 18)}</label>)}</div>)}
+    </div>
+    <div class="actions"><button type="submit">जतन करा</button><a href="/admin/ads">रद्द करा</a></div>
+  </form>
+</AdminLayout>

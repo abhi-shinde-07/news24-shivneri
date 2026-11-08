@@ -2,17 +2,42 @@
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getDB } from '../../../lib/db';
 import { fmtDate } from '../../../lib/format';
-const status = ['draft', 'published', 'archived'].includes(Astro.url.searchParams.get('status') ?? '') ? Astro.url.searchParams.get('status') : null;
-const rows = (await getDB(Astro.locals).prepare(
-  `SELECT a.id, a.headline, a.status, a.updated_at, c.name_mr FROM articles a JOIN categories c ON c.id = a.category_id
-   WHERE (? IS NULL OR a.status = ?) ORDER BY a.updated_at DESC LIMIT 100`).bind(status, status)
-  .all<{ id: number; headline: string; status: string; updated_at: string; name_mr: string }>()).results;
+import { back, readForm } from '../../../lib/admin';
+import { deleteArticle } from '../../../lib/articles';
+const db = getDB(Astro.locals);
+if (Astro.request.method === 'POST') {
+  const { int } = await readForm(Astro.request);
+  const ok = await deleteArticle(db, int('id'));
+  return back(Astro.url, ok ? 'बातमी कायमची हटवली.' : 'बातमी सापडली नाही.', !ok);
+}
+const sp = Astro.url.searchParams;
+const status = ['draft', 'published', 'archived'].includes(sp.get('status') ?? '') ? sp.get('status') : null;
+const q = (sp.get('q') ?? '').trim().slice(0, 100);
+const rows = (await db.prepare(
+  `SELECT a.id, a.headline, a.status, a.updated_at, a.location_label, c.name_mr FROM articles a JOIN categories c ON c.id = a.category_id
+   WHERE (?1 IS NULL OR a.status = ?1) AND (?2 = '' OR a.headline LIKE '%' || ?2 || '%') ORDER BY a.updated_at DESC LIMIT 200`).bind(status, q)
+  .all<{ id: number; headline: string; status: string; updated_at: string; location_label: string | null; name_mr: string }>()).results;
+const badge = (s: string) => (s === 'published' ? 'on' : s === 'archived' ? 'off' : '');
 ---
 <AdminLayout title="बातमी व्यवस्थापन">
   <h2>बातमी व्यवस्थापन</h2>
-  <p><a href="/admin/articles/new"><button>+ नवीन बातमी</button></a>
+  <p><a class="button" href="/admin/articles/new">+ नवीन बातमी</a>
      &nbsp; <a href="/admin/articles">सर्व</a> · <a href="/admin/articles?status=draft">Draft</a> · <a href="/admin/articles?status=published">Published</a> · <a href="/admin/articles?status=archived">Archived</a></p>
-  <table><thead><tr><th>शीर्षक</th><th>विभाग</th><th>स्थिती</th><th>अद्यतनित</th></tr></thead><tbody>
-    {rows.map((a) => <tr><td><a href={`/admin/articles/${a.id}`}>{a.headline}</a></td><td>{a.name_mr}</td><td>{a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
-  </tbody></table>
+  <form method="get" style="display:flex;gap:.5rem;margin-bottom:.8rem;max-width:480px">
+    {status && <input type="hidden" name="status" value={status} />}
+    <input name="q" value={q} placeholder="शीर्षकात शोधा…" style="flex:1;padding:.45rem;border:1px solid #a1a1aa;border-radius:4px;font:inherit" />
+    <button class="sec" type="submit">शोधा</button>
+  </form>
+  <div class="tablewrap"><table><thead><tr><th>शीर्षक</th><th>विभाग</th><th>स्थिती</th><th>अद्यतनित</th><th></th></tr></thead><tbody>
+    {rows.length === 0 && <tr><td colspan="5">बातमी सापडली नाही.</td></tr>}
+    {rows.map((a) => <tr>
+      <td><a href={`/admin/articles/${a.id}`}>{a.headline}</a>{a.location_label && <small style="color:#71717a"> · {a.location_label}</small>}</td>
+      <td>{a.name_mr}</td><td><span class={`badge ${badge(a.status)}`}>{a.status}</span></td><td>{fmtDate(a.updated_at)}</td>
+      <td style="white-space:nowrap">
+        {a.status === 'published' && <a class="small" href={`/news/${a.id}`} target="_blank" rel="noopener">पहा</a>}
+        <form method="post" class="inline"><input type="hidden" name="id" value={a.id} />
+          <button class="danger small" type="submit" data-confirm={`“${a.headline}” ही बातमी कायमची हटवायची? हे परत आणता येणार नाही.`}>हटवा</button></form>
+      </td></tr>)}
+  </tbody></table></div>
+  <p><small>बातमी लपवायची असल्यास “आर्काइव्ह” वापरा; “हटवा” केल्यावर बातमी, तिच्या सुधारणा आणि जुन्या आवृत्त्या कायमच्या जातात.</small></p>
 </AdminLayout>

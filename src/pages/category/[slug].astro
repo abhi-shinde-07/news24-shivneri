@@ -1,12 +1,20 @@
 ---
 import Base from '../../layouts/Base.astro';
-import Byline from '../../components/Byline.astro';
+import Card from '../../components/Card.astro';
+import Pager from '../../components/Pager.astro';
 import { getDB, getCategory } from '../../lib/db';
-const data = await getCategory(getDB(Astro.locals), Astro.params.slug ?? '');
-if (!data) return new Response('विभाग सापडला नाही', { status: 404 });
+import { pageFrom } from '../../lib/page';
+const slug = Astro.params.slug ?? '';
+const page = pageFrom(Astro.url);
+const data = await getCategory(getDB(Astro.locals), slug, page);
+if (!data || (page > 1 && data.articles.length === 0)) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+const base = `/category/${slug}`;
 ---
-<Base title={`${data.name} – NEWS24 SHIVNERI`}>
+<Base title={`${data.name}${page > 1 ? ` – पान ${page}` : ''} – NEWS24 SHIVNERI`}
+  description={`${data.name} विभागातील पुणे जिल्ह्यातील ताज्या बातम्या – NEWS24 SHIVNERI`} canonical={page > 1 ? `${base}?page=${page}` : base}>
   <h1 class="section-head first">{data.name}</h1>
   {data.articles.length === 0 && <p class="deck">या विभागात अद्याप बातम्या नाहीत.</p>}
-  {data.articles.map((a) => <div class="item"><h2 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h2><Byline a={a} /></div>)}
+  <div class="list">{data.articles.map((a) => <Card a={a} showCat={false} />)}</div>
+  <Pager page={page} hasNext={data.hasNext} base={base} />
 </Base>

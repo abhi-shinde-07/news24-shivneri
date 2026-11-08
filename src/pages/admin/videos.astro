@@ -1,0 +1,91 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDB } from '../../lib/db';
+import { fmtDate } from '../../lib/format';
+import { back, readForm } from '../../lib/admin';
+import { nowIso } from '../../lib/articles';
+const db = getDB(Astro.locals);
+
+// youtube.com/watch?v=, youtu.be/, /shorts/, /embed/, /live/ or a bare 11-character ID.
+function youtubeId(input: string) {
+  const s = input.trim();
+  if (/^[\w-]{11}$/.test(s)) return s;
+  try {
+    const u = new URL(s);
+    const host = u.hostname.replace(/^(www|m|music)\./, '');
+    let id = '';
+    if (host === 'youtu.be') id = u.pathname.slice(1);
+    else if (host === 'youtube.com' || host === 'youtube-nocookie.com')
+      id = u.searchParams.get('v') ?? u.pathname.match(/^\/(?:shorts|embed|live)\/([^/?]+)/)?.[1] ?? '';
+    return /^[\w-]{11}$/.test(id) ? id : null;
+  } catch { return null; }
+}
+
+let editId = Number(Astro.url.searchParams.get('edit')) || 0;
+if (Astro.request.method === 'POST') {
+  const { str, int, bool } = await readForm(Astro.request);
+  const action = str('action'), id = int('id');
+  if (action === 'delete') { await db.prepare('DELETE FROM videos WHERE id = ?').bind(id).first(); return back(Astro.url, 'व्हिडिओ हटवला.'); }
+  if (action === 'feature') { await db.prepare('UPDATE videos SET is_featured = 1 - is_featured WHERE id = ?').bind(id).first(); return back(Astro.url, 'Featured बदलले.'); }
+  if (action === 'status') {
+    await db.prepare(`UPDATE videos SET status = CASE status WHEN 'published' THEN 'draft' ELSE 'published' END WHERE id = ?`).bind(id).first();
+    return back(Astro.url, 'स्थिती बदलली.');
+  }
+  if (action === 'save') {
+    const yt = youtubeId(str('url', 300));
+    const title = str('title', 200), description = str('description', 3000) || null;
+    const status = str('status') === 'draft' ? 'draft' : 'published';
+    if (!yt) return back(Astro.url, 'YouTube लिंक ओळखता आली नाही. (youtube.com/watch, youtu.be किंवा shorts लिंक द्या)', true);
+    if (!title) return back(Astro.url, 'मराठी शीर्षक लिहा.', true);
+    const dupe = await db.prepare('SELECT id FROM videos WHERE youtube_id = ? AND id <> ?').bind(yt, id).first();
+    if (dupe) return back(Astro.url, 'हा व्हिडिओ आधीच जोडलेला आहे.', true);
+    if (id) await db.prepare('UPDATE videos SET youtube_id=?, title=?, description=?, is_featured=?, status=? WHERE id=?').bind(yt, title, description, bool('is_featured'), status, id).first();
+    else await db.prepare('INSERT INTO videos (youtube_id, title, description, is_featured, status, published_at) VALUES (?,?,?,?,?,?)').bind(yt, title, description, bool('is_featured'), status, nowIso()).first();
+    return back(Astro.url, 'व्हिडिओ जतन केला.');
+  }
+}
+const videos = (await db.prepare('SELECT id, youtube_id, title, description, is_featured, status, published_at FROM videos ORDER BY published_at DESC LIMIT 200')
+  .all<{ id: number; youtube_id: string; title: string; description: string | null; is_featured: number; status: string; published_at: string }>()).results;
+const ed = videos.find((v) => v.id === editId);
+if (!ed) editId = 0;
+---
+<AdminLayout title="व्हिडिओ व्यवस्थापन">
+  <h2>व्हिडिओ व्यवस्थापन</h2>
+  <form method="post" class="card" id="vform">
+    <h3 style="margin-top:0">{ed ? 'व्हिडिओ संपादित करा' : 'नवीन व्हिडिओ'}</h3>
+    <input type="hidden" name="action" value="save" /><input type="hidden" name="id" value={editId} />
+    <div class="row">
+      <div class="f"><label for="url">YouTube लिंक</label><input id="url" name="url" required value={ed ? `https://youtu.be/${ed.youtube_id}` : ''} placeholder="https://www.youtube.com/watch?v=… / youtu.be/… / shorts/…" /></div>
+      <div class="f"><label for="title">मराठी शीर्षक</label><input id="title" name="title" required maxlength="200" value={ed?.title ?? ''} /></div>
+    </div>
+    <p id="ytprev" style="margin:.2rem 0">{ed && <img src={`https://i.ytimg.com/vi/${ed.youtube_id}/mqdefault.jpg`} alt="" width="240" />}</p>
+    <div class="f"><label for="desc">वर्णन</label><textarea id="desc" name="description" rows="3" maxlength="3000">{ed?.description ?? ''}</textarea></div>
+    <div class="row">
+      <label class="chk"><input type="checkbox" name="is_featured" checked={!!ed?.is_featured} /> मुख्यपृष्ठावर दाखवा (Featured)</label>
+      <div class="f"><label for="st">स्थिती</label><select id="st" name="status"><option value="published" selected={ed?.status !== 'draft'}>प्रकाशित</option><option value="draft" selected={ed?.status === 'draft'}>ड्राफ्ट</option></select></div>
+    </div>
+    <div class="actions"><button type="submit">जतन करा</button>{ed && <a href="/admin/videos">रद्द करा</a>}</div>
+  </form>
+  <h3>सर्व व्हिडिओ</h3>
+  <div class="tablewrap"><table><thead><tr><th></th><th>शीर्षक</th><th>स्थिती</th><th>तारीख</th><th></th></tr></thead><tbody>
+    {videos.length === 0 && <tr><td colspan="5">अद्याप व्हिडिओ नाहीत.</td></tr>}
+    {videos.map((v) => <tr>
+      <td><img src={`https://i.ytimg.com/vi/${v.youtube_id}/default.jpg`} alt="" width="96" loading="lazy" /></td>
+      <td><b>{v.title}</b>{v.is_featured ? <span class="badge on" style="margin-left:.3rem">Featured</span> : ''}</td>
+      <td><span class={`badge ${v.status === 'published' ? 'on' : ''}`}>{v.status === 'published' ? 'प्रकाशित' : 'ड्राफ्ट'}</span></td>
+      <td>{fmtDate(v.published_at)}</td>
+      <td style="white-space:nowrap"><a class="small" href={`/admin/videos?edit=${v.id}#vform`}>संपादित</a>
+        {[['feature', v.is_featured ? 'Featured काढा' : 'Featured'], ['status', v.status === 'published' ? 'ड्राफ्ट करा' : 'प्रकाशित करा']].map(([a, t]) =>
+          <form method="post" class="inline"><input type="hidden" name="id" value={v.id} /><input type="hidden" name="action" value={a} /><button class="sec small" type="submit">{t}</button></form>)}
+        <form method="post" class="inline"><input type="hidden" name="id" value={v.id} /><input type="hidden" name="action" value="delete" />
+          <button class="danger small" type="submit" data-confirm="हा व्हिडिओ हटवायचा?">हटवा</button></form></td>
+    </tr>)}
+  </tbody></table></div>
+  <script is:inline>
+    // Thumbnail preview while typing the link.
+    document.getElementById('url').addEventListener('input', function (e) {
+      var m = e.target.value.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{11})/) || e.target.value.match(/^([\w-]{11})$/);
+      document.getElementById('ytprev').innerHTML = m ? '<img width="240" alt="" src="https://i.ytimg.com/vi/' + m[1] + '/mqdefault.jpg">' : '';
+    });
+  </script>
+</AdminLayout>

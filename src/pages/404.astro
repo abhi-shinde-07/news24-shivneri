@@ -1,0 +1,16 @@
+---
+import Base from '../layouts/Base.astro';
+import { getDB, getNavCategories } from '../lib/db';
+Astro.response.status = 404;
+const cats = await getNavCategories(getDB(Astro.locals));
+---
+<Base title="पान सापडले नाही – NEWS24 SHIVNERI" noindex>
+  <section class="notfound">
+    <p class="big">४०४</p>
+    <h1 class="h-lead">माफ करा, हे पान सापडले नाही.</h1>
+    <p class="deck">ही बातमी हटवली गेली असेल किंवा लिंक चुकीची असेल.</p>
+    <p class="actions"><a class="btn" href="/">मुख्यपृष्ठ</a> <a class="btn alt" href="/latest">ताज्या बातम्या</a></p>
+    <h2 class="section-head">विभाग</h2>
+    <ul class="chips">{cats.map((c) => <li><a href={`/category/${c.slug}`}>{c.name_mr}</a></li>)}</ul>
+  </section>
+</Base>

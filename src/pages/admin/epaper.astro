@@ -1,0 +1,126 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDB } from '../../lib/db';
+import { getBucket } from '../../lib/media';
+import { fmtDay, fmtSize } from '../../lib/format';
+import { MAX_PDF } from '../../lib/epaper';
+import { getSettings, saveSettings } from '../../lib/settings';
+import { getUsage, R2_LIMIT } from '../../lib/usage';
+import { back, readForm } from '../../lib/admin';
+import { nowIso } from '../../lib/articles';
+const db = getDB(Astro.locals);
+type E = { id: number; edition_date: string; title: string; edition_name: string; pdf_key: string; cover_key: string | null; size: number; status: string };
+async function remove(e: Pick<E, 'id' | 'pdf_key' | 'cover_key'>) {
+  const bucket = getBucket(Astro.locals);
+  await bucket.delete(e.pdf_key);
+  if (e.cover_key) await bucket.delete(e.cover_key);
+  await db.prepare('DELETE FROM epapers WHERE id = ?').bind(e.id).first();
+}
+if (Astro.request.method === 'POST') {
+  const { str, int } = await readForm(Astro.request);
+  const action = str('action'), id = int('id');
+  const one = id ? await db.prepare('SELECT id, pdf_key, cover_key, status FROM epapers WHERE id = ?').bind(id).first<E>() : null;
+  if (action === 'delete' && one) { await remove(one); return back(Astro.url, 'ई-पेपर व PDF हटवली.'); }
+  if (action === 'status' && one) {
+    const pub = one.status !== 'published';
+    await db.prepare('UPDATE epapers SET status = ?, published_at = COALESCE(published_at, ?) WHERE id = ?').bind(pub ? 'published' : 'draft', pub ? nowIso() : null, id).first();
+    return back(Astro.url, pub ? 'ई-पेपर प्रकाशित केला.' : 'ई-पेपर ड्राफ्ट केला.');
+  }
+  if (action === 'retention') {
+    const m = int('months');
+    if (!Number.isInteger(m) || m < 1 || m > 120) return back(Astro.url, 'महिने १ ते १२० दरम्यान असावेत.', true);
+    await saveSettings(db, { epaper_retention_months: String(m) });
+    return back(Astro.url, `PDF ${m} महिने ठेवल्या जातील.`);
+  }
+  if (action === 'purge') {
+    const months = Number((await getSettings(db)).epaper_retention_months) || 12;
+    const old = (await db.prepare(`SELECT id, pdf_key, cover_key FROM epapers WHERE edition_date < date('now', ?)`).bind(`-${months} months`).all<E>()).results;
+    for (const e of old) await remove(e);
+    return back(Astro.url, `${months} महिन्यांपेक्षा जुने ${old.length} ई-पेपर हटवले.`);
+  }
+}
+const s = await getSettings(db);
+const list = (await db.prepare('SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size, status FROM epapers ORDER BY edition_date DESC LIMIT 400').all<E>()).results;
+const total = list.reduce((n, e) => n + e.size, 0);
+const u = await getUsage(db);
+const oldCount = (await db.prepare(`SELECT COUNT(*) AS n FROM epapers WHERE edition_date < date('now', ?)`).bind(`-${Number(s.epaper_retention_months) || 12} months`).first<{ n: number }>())?.n ?? 0;
+const pct = (u.r2 / R2_LIMIT) * 100;
+---
+<AdminLayout title="ई-पेपर व्यवस्थापन">
+  <h2>ई-पेपर व्यवस्थापन</h2>
+  <div class="row">
+    <form id="upload" class="card">
+      <h3 style="margin-top:0">नवीन आवृत्ती अपलोड करा</h3>
+      <div class="row">
+        <div class="f"><label for="d">तारीख</label><input id="d" name="edition_date" type="date" required value={new Date().toISOString().slice(0, 10)} /></div>
+        <div class="f"><label for="en">आवृत्तीचे नाव</label><input id="en" name="edition_name" value={s.edition} maxlength="100" /></div>
+      </div>
+      <div class="f"><label for="t">शीर्षक</label><input id="t" name="title" required maxlength="200" value="NEWS24 SHIVNERI ई-पेपर" /></div>
+      <div class="f"><label for="p">PDF (कमाल {MAX_PDF / 1048576} MB)</label><input id="p" name="pdf" type="file" accept="application/pdf" required /></div>
+      <div class="f"><label for="st">स्थिती</label><select id="st" name="status"><option value="published">प्रकाशित</option><option value="draft">ड्राफ्ट</option></select></div>
+      <button type="submit">अपलोड करा</button> <span id="umsg" role="status"></span>
+      <p><small>पहिल्या पानाचे मुखपृष्ठ चित्र आपोआप तयार होते.</small></p>
+    </form>
+    <div class="card">
+      <h3 style="margin-top:0">साठवण</h3>
+      <p>ई-पेपर: <b>{fmtSize(total)}</b> ({list.length} आवृत्त्या)<br />एकूण R2 वापर: <b>{fmtSize(u.r2)} / 10 GB</b></p>
+      <div class="meter"><i class={pct >= 80 ? 'r' : pct >= 70 ? 'w' : ''} style={`width:${Math.max(pct, 0.5)}%`}></i></div>
+      <form method="post" style="display:flex;gap:.5rem;align-items:end;margin:.8rem 0"><input type="hidden" name="action" value="retention" />
+        <div class="f" style="margin:0;flex:1"><label for="m">PDF किती महिने ठेवायच्या?</label><input id="m" name="months" type="number" min="1" max="120" value={s.epaper_retention_months} /></div>
+        <button class="sec" type="submit">जतन</button></form>
+      <form method="post"><input type="hidden" name="action" value="purge" />
+        <button class="danger" type="submit" disabled={oldCount === 0} data-confirm={`${s.epaper_retention_months} महिन्यांपेक्षा जुने ${oldCount} ई-पेपर कायमचे हटवायचे?`}>
+          {s.epaper_retention_months} महिन्यांपेक्षा जुन्या PDF हटवा ({oldCount})</button></form>
+    </div>
+  </div>
+  <h3>सर्व आवृत्त्या</h3>
+  <div class="tablewrap"><table><thead><tr><th></th><th>तारीख</th><th>शीर्षक</th><th>आकार</th><th>स्थिती</th><th></th></tr></thead><tbody>
+    {list.length === 0 && <tr><td colspan="6">अद्याप ई-पेपर नाही.</td></tr>}
+    {list.map((e) => <tr>
+      <td>{e.cover_key && <img src={`/files/${e.cover_key}`} alt="" width="50" loading="lazy" />}</td>
+      <td>{fmtDay(e.edition_date)}</td><td>{e.title}<br /><small>{e.edition_name}</small></td><td>{fmtSize(e.size)}</td>
+      <td><span class={`badge ${e.status === 'published' ? 'on' : ''}`}>{e.status === 'published' ? 'प्रकाशित' : 'ड्राफ्ट'}</span></td>
+      <td style="white-space:nowrap"><a class="small" href={`/files/${e.pdf_key}`} target="_blank">PDF</a>
+        {e.status === 'published' && <a class="small" href={`/epaper/${e.edition_date}`} target="_blank">पहा</a>}
+        <form method="post" class="inline"><input type="hidden" name="id" value={e.id} /><input type="hidden" name="action" value="status" />
+          <button class="sec small" type="submit">{e.status === 'published' ? 'ड्राफ्ट करा' : 'प्रकाशित करा'}</button></form>
+        <form method="post" class="inline"><input type="hidden" name="id" value={e.id} /><input type="hidden" name="action" value="delete" />
+          <button class="danger small" type="submit" data-confirm="हा ई-पेपर व PDF कायमची हटवायची?">हटवा</button></form></td>
+    </tr>)}
+  </tbody></table></div>
+</AdminLayout>
+<script>
+  import * as pdfjs from 'pdfjs-dist';
+  import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+  pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
+  const form = document.getElementById('upload') as HTMLFormElement;
+  const msg = document.getElementById('umsg')!;
+  // Render page 1 to a small WebP for the archive cover.
+  async function coverOf(file: File): Promise<Blob | null> {
+    try {
+      const doc = await pdfjs.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+      const page = await doc.getPage(1);
+      const vp = page.getViewport({ scale: 600 / page.getViewport({ scale: 1 }).width });
+      const c = document.createElement('canvas');
+      c.width = vp.width; c.height = vp.height;
+      await page.render({ canvasContext: c.getContext('2d')!, viewport: vp, canvas: c }).promise;
+      return await new Promise((r) => c.toBlob(r, 'image/webp', 0.8));
+    } catch { return null; }
+  }
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const fd = new FormData(form);
+    const pdf = fd.get('pdf') as File;
+    const btn = form.querySelector('button')!;
+    btn.disabled = true; msg.textContent = 'मुखपृष्ठ तयार होत आहे…';
+    const cover = await coverOf(pdf);
+    if (cover) fd.append('cover', cover, 'cover.webp');
+    msg.textContent = 'अपलोड होत आहे…';
+    try {
+      const res = await fetch('/api/admin/epaper', { method: 'POST', body: fd });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) { msg.textContent = d.error ?? 'अपलोड अयशस्वी.'; btn.disabled = false; return; }
+      location.href = '/admin/epaper?ok=' + encodeURIComponent('ई-पेपर अपलोड झाला.');
+    } catch { msg.textContent = 'रद्द केले.'; btn.disabled = false; }
+  });
+</script>
