@@ -22,9 +22,9 @@ export const PUT: APIRoute = async ({ request, locals, params }) => {
   const publishedAt = old.published_at ?? (d.status === 'published' ? now : null);
   await db.prepare(
     `UPDATE articles SET headline=?, subtitle=?, body_html=?, category_id=?, location_label=?, byline=?, source=?,
-       image_credit=?, main_image_key=?, main_image_caption=?, is_featured=?, is_breaking=?, status=?, published_at=?, updated_at=? WHERE id=?`)
+       image_credit=?, main_image_key=?, main_image_caption=?, youtube_id=?, is_featured=?, is_breaking=?, status=?, published_at=?, updated_at=? WHERE id=?`)
     .bind(d.headline, d.subtitle, d.body_html, d.category_id, d.location_label, d.byline, d.source,
-      d.image_credit, d.main_image_key, d.main_image_caption, d.is_featured, d.is_breaking, d.status, publishedAt, now, id).first();
+      d.image_credit, d.main_image_key, d.main_image_caption, d.youtube_id, d.is_featured, d.is_breaking, d.status, publishedAt, now, id).first();
   return json({ id });
 };
 

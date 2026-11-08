@@ -4,7 +4,7 @@ import AdSlot from '../../components/AdSlot.astro';
 import Card from '../../components/Card.astro';
 import { getDB, getArticle } from '../../lib/db';
 import { fmtDate } from '../../lib/format';
-import { mediaUrl, rewriteBody } from '../../lib/mediaUrl';
+import { mediaUrl, rewriteBody, thumbOf } from '../../lib/mediaUrl';
 import { SITE } from '../../lib/page';
 const id = Number(Astro.params.id);
 const data = Number.isInteger(id) ? await getArticle(getDB(Astro.locals), id) : null;
@@ -13,7 +13,8 @@ Astro.response.headers.set('Cache-Control', 'public, max-age=60');
 const { article: a, corrections, related } = data;
 const edited = a.updated_at > a.published_at;
 const url = `${SITE}/news/${a.id}`;
-const img = a.main_image_key ? new URL(mediaUrl(a.main_image_key), SITE).href : `${SITE}/og-image.png`;
+const thumb = thumbOf(a);
+const img = thumb ? new URL(thumb, SITE).href : `${SITE}/og-image.png`;
 const description = a.subtitle ?? (a.body_html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160) || a.headline);
 const ld = JSON.stringify({
   '@context': 'https://schema.org', '@type': 'NewsArticle', headline: a.headline.slice(0, 110), description,
@@ -27,7 +28,7 @@ const ld = JSON.stringify({
 const share = encodeURIComponent(`${a.headline}\n${url}`);
 ---
 <Base title={`${a.headline} – NEWS24 SHIVNERI`} description={description} canonical={`/news/${a.id}`}
-  type="article" image={a.main_image_key ? mediaUrl(a.main_image_key) : undefined} published={a.published_at} modified={a.updated_at}>
+  type="article" image={thumb ?? undefined} published={a.published_at} modified={a.updated_at}>
   <script slot="head" type="application/ld+json" set:html={ld} />
   <article class="article-body">
     <p class="crumbs"><a href="/">मुख्यपृष्ठ</a> › <a href={`/category/${a.category_slug}`}>{a.category_name}</a>{a.location_label && <> · {a.location_label}</>}</p>
@@ -41,6 +42,12 @@ const share = encodeURIComponent(`${a.headline}\n${url}`);
       <a class="wa" href={`https://wa.me/?text=${share}`} target="_blank" rel="noopener">WhatsApp वर शेअर करा</a>
       <button type="button" data-copy={url} hidden>लिंक कॉपी करा</button>
     </div>
+    {a.youtube_id && (
+      <div class="player">
+        <button type="button" data-yt={a.youtube_id} aria-label={`व्हिडिओ चालू करा: ${a.headline}`}>
+          <img src={`https://i.ytimg.com/vi/${a.youtube_id}/hqdefault.jpg`} alt="" width="480" height="360" /><span class="play" aria-hidden="true">▶</span>
+        </button>
+      </div>)}
     {a.main_image_key && <img class="lead-img" src={mediaUrl(a.main_image_key)} alt={a.main_image_caption ?? a.headline} width="1200" height="675" fetchpriority="high" />}
     {(a.main_image_caption || a.image_credit) && <p class="caption">{a.main_image_caption}{a.image_credit && <> · श्रेय: {a.image_credit}</>}</p>}
     <AdSlot position="in_between" />

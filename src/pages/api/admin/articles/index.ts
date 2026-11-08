@@ -15,10 +15,10 @@ export const POST: APIRoute = async ({ request, locals }) => {
   const slug = 'a-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
   const r = await db.prepare(
     `INSERT INTO articles (slug, headline, subtitle, body_html, category_id, location_label, byline, author_id, source,
-       image_credit, main_image_key, main_image_caption, is_featured, is_breaking, status, published_at, created_at, updated_at)
-     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`)
+       image_credit, main_image_key, main_image_caption, youtube_id, is_featured, is_breaking, status, published_at, created_at, updated_at)
+     VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING id`)
     .bind(slug, d.headline, d.subtitle, d.body_html, d.category_id, d.location_label, d.byline, locals.user!.id, d.source,
-      d.image_credit, d.main_image_key, d.main_image_caption, d.is_featured, d.is_breaking, d.status, d.status === 'published' ? now : null, now, now)
+      d.image_credit, d.main_image_key, d.main_image_caption, d.youtube_id, d.is_featured, d.is_breaking, d.status, d.status === 'published' ? now : null, now, now)
     .first<{ id: number }>();
   return json({ id: r!.id });
 };

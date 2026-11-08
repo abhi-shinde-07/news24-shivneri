@@ -15,7 +15,7 @@ const revisions = (await db.prepare(
   .all<{ id: number; headline: string; saved_at: string; name: string | null }>()).results;
 const initial = {
   id, headline: a.headline, subtitle: a.subtitle ?? '', body_html: a.body_html, category_id: a.category_id,
-  location_label: a.location_label ?? '', byline: a.byline, source: a.source, image_credit: a.image_credit ?? '', main_image_key: a.main_image_key ?? '', main_image_caption: a.main_image_caption ?? '',
+  location_label: a.location_label ?? '', byline: a.byline, source: a.source, image_credit: a.image_credit ?? '', main_image_key: a.main_image_key ?? '', main_image_caption: a.main_image_caption ?? '', youtube_id: a.youtube_id ?? '',
   is_featured: !!a.is_featured, is_breaking: !!a.is_breaking, status: a.status,
 };
 ---

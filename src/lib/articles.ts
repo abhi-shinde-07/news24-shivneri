@@ -14,8 +14,14 @@ export async function deleteArticle(db: D1, id: number) {
 export type ArticleInput = {
   headline: string; subtitle: string | null; body_html: string; category_id: number;
   location_label: string | null; byline: string; source: string; image_credit: string | null;
-  main_image_key: string | null; main_image_caption: string | null; is_featured: 0 | 1; is_breaking: 0 | 1; status: 'draft' | 'published' | 'archived';
+  main_image_key: string | null; main_image_caption: string | null; youtube_id: string | null; is_featured: 0 | 1; is_breaking: 0 | 1; status: 'draft' | 'published' | 'archived';
 };
+// Accepts a YouTube link (watch, youtu.be, shorts, embed, live) or a bare 11-character ID.
+export function youtubeId(input: string) {
+  const s = input.trim();
+  if (/^[\w-]{11}$/.test(s)) return s;
+  return s.match(/(?:v=|youtu\.be\/|shorts\/|embed\/|live\/)([\w-]{11})/)?.[1] ?? null;
+}
 export const nowIso = () => new Date().toISOString().replace(/\.\d+Z$/, 'Z');
 export const json = (o: unknown, status = 200) =>
   new Response(JSON.stringify(o), { status, headers: { 'Content-Type': 'application/json' } });
@@ -30,6 +36,7 @@ export function parseArticle(b: any): { error: string } | { data: ArticleInput }
     byline: s(b?.byline, 100), source: s(b?.source, 200), image_credit: s(b?.image_credit, 200) || null,
     main_image_key: /^img\/\d{4}\/\d{2}\/[a-z0-9]+\.(webp|jpg|png)$/.test(String(b?.main_image_key)) ? String(b.main_image_key) : null,
     main_image_caption: s(b?.main_image_caption, 300) || null,
+    youtube_id: youtubeId(String(b?.youtube_id ?? '')),
     is_featured: b?.is_featured ? 1 : 0, is_breaking: b?.is_breaking ? 1 : 0, status,
   };
   if (!d.headline) return { error: 'मराठी शीर्षक आवश्यक आहे.' };

@@ -120,7 +120,6 @@ img { max-width: 100%; display: block; }
 .share a:hover, .btn:hover { text-decoration: none; filter: brightness(.92); }
 .btn { background: var(--red); border-color: var(--red); color: #fff; }
 .btn.alt { background: var(--paper); color: var(--ink); border-color: var(--rule); }
-.body p:first-child::first-letter { font-family: var(--font-head); font-weight: 800; float: left; font-size: 3.2em; line-height: .9; padding: .1em .12em 0 0; color: var(--red); }
 .policy { margin-top: 1.5rem; border-top: 1px solid var(--rule-light); padding-top: .6rem; }
 .policy a, .page a { color: var(--red); text-decoration: underline; text-decoration-thickness: 1px; }
 .page h2 { font-family: var(--font-head); font-size: 1.3rem; margin: 1.4rem 0 .4rem; }

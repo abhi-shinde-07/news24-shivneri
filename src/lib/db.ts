@@ -11,7 +11,7 @@ export const getDB = (_locals?: any): D1 => (env as any).DB;
 
 export type ArticleItem = {
   id: number; headline: string; subtitle: string | null; byline: string; source: string;
-  location_label: string | null; main_image_key: string | null; main_image_caption: string | null;
+  location_label: string | null; main_image_key: string | null; main_image_caption: string | null; youtube_id: string | null;
   is_featured: number; is_breaking: number; published_at: string; category_name: string; category_slug: string;
 };
 export type Article = ArticleItem & { body_html: string; image_credit: string | null; updated_at: string };
@@ -20,7 +20,7 @@ export type Video = { id: number; youtube_id: string; title: string; description
 export type Epaper = { id: number; edition_date: string; title: string; edition_name: string; pdf_key: string; cover_key: string | null; size: number };
 export type Category = { id: number; slug: string; name_mr: string };
 
-const LIST = `a.id, a.headline, a.subtitle, a.byline, a.source, a.location_label, a.main_image_key,
+const LIST = `a.id, a.headline, a.subtitle, a.byline, a.source, a.location_label, a.main_image_key, a.youtube_id,
   a.main_image_caption, a.is_featured, a.is_breaking, a.published_at, c.name_mr AS category_name, c.slug AS category_slug`;
 const FROM = `FROM articles a JOIN categories c ON c.id = a.category_id`;
 // Only live articles: published and not scheduled in the future.

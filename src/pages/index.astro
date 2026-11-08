@@ -4,7 +4,7 @@ import AdSlot from '../components/AdSlot.astro';
 import Byline from '../components/Byline.astro';
 import Card from '../components/Card.astro';
 import { getDB, getHome, getCategoryBlocks, getFeaturedVideos, getLatestEpaper } from '../lib/db';
-import { mediaUrl } from '../lib/mediaUrl';
+import { thumbOf } from '../lib/mediaUrl';
 import { fmtDay } from '../lib/format';
 const db = getDB(Astro.locals);
 const [{ lead, others, more, top, breaking }, blocks, videos, epaper] =
@@ -26,7 +26,7 @@ const ld = JSON.stringify({
   {lead && (
   <section class="front">
     <div class="col">
-      {lead.main_image_key && <a href={`/news/${lead.id}`} tabindex="-1"><img class="lead-img" src={mediaUrl(lead.main_image_key)} alt={lead.main_image_caption ?? lead.headline} width="1200" height="675" fetchpriority="high" /></a>}
+      {thumbOf(lead, 'maxresdefault') && <a href={`/news/${lead.id}`} tabindex="-1"><img class="lead-img" src={thumbOf(lead, lead.main_image_key ? undefined : 'hqdefault')!} alt={lead.main_image_caption ?? lead.headline} width="1200" height="675" fetchpriority="high" /></a>}
       {lead.main_image_caption && <p class="caption">{lead.main_image_caption}</p>}
       <a class="kicker" href={`/category/${lead.category_slug}`}>{lead.category_name}</a>
       <h1 class="h-lead"><a href={`/news/${lead.id}`}>{lead.headline}</a></h1>
@@ -38,7 +38,7 @@ const ld = JSON.stringify({
       <h2 class="section-head first">इतर महत्त्वाच्या बातम्या</h2>
       {others.map((a) => (
         <div class="item">
-          {a.main_image_key && <a href={`/news/${a.id}`} tabindex="-1" aria-hidden="true"><img class="mid-img" src={mediaUrl(a.main_image_key)} alt="" loading="lazy" width="400" height="225" /></a>}
+          {thumbOf(a) && <a href={`/news/${a.id}`} tabindex="-1" aria-hidden="true"><img class="mid-img" src={thumbOf(a)!} alt="" loading="lazy" width="400" height="225" /></a>}
           <a class="kicker" href={`/category/${a.category_slug}`}>{a.category_name}</a>
           <h3 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h3><Byline a={a} />
         </div>))}
@@ -63,7 +63,7 @@ const ld = JSON.stringify({
       {blocks.map((b) => (
         <div class="block">
           <h2 class="section-head"><a href={`/category/${b.slug}`}>{b.name} <span aria-hidden="true">›</span></a></h2>
-          {b.items[0]?.main_image_key && <a href={`/news/${b.items[0].id}`} tabindex="-1" aria-hidden="true"><img class="mid-img" src={mediaUrl(b.items[0].main_image_key)} alt="" loading="lazy" width="400" height="225" /></a>}
+          {b.items[0] && thumbOf(b.items[0]) && <a href={`/news/${b.items[0].id}`} tabindex="-1" aria-hidden="true"><img class="mid-img" src={thumbOf(b.items[0])!} alt="" loading="lazy" width="400" height="225" /></a>}
           {b.items.map((a, i) => <div class="item"><h3 class={i === 0 ? 'h-mid' : 'h-small'}><a href={`/news/${a.id}`}>{a.headline}</a></h3>{i === 0 && a.location_label && <p class="byline">{a.location_label}</p>}</div>)}
         </div>))}
     </section>)}

@@ -22,7 +22,7 @@ const Figure = Node.create({
 type Cat = { id: number; name_mr: string };
 type Initial = {
   id?: number; headline: string; subtitle: string; body_html: string; category_id: number | '';
-  location_label: string; main_image_key: string; main_image_caption: string; byline: string; source: string; image_credit: string;
+  location_label: string; main_image_key: string; main_image_caption: string; youtube_id: string; byline: string; source: string; image_credit: string;
   is_featured: boolean; is_breaking: boolean; status: string;
 };
 type Corr = { note: string; created_at: string };
@@ -108,6 +108,9 @@ export default function ArticleEditor({ categories, initial, corrections = [] }:
       <div className="row">
         <div className="f"><label>लेखक / संपादकीय नाव *</label><input value={f.byline} onChange={(x) => set('byline', x.target.value)} /></div>
         <div className="f"><label>बातमीचा स्रोत *</label><input value={f.source} placeholder="उदा. स्वतःचे वार्ताहर, प्रसिद्धीपत्रक" onChange={(x) => set('source', x.target.value)} /></div>
+      </div>
+      <div className="f"><label>YouTube व्हिडिओ (ऐच्छिक – बातमीच्या सुरुवातीला दिसेल)</label>
+        <input value={f.youtube_id} placeholder="https://youtu.be/… किंवा youtube.com/watch?v=…" onChange={(x) => set('youtube_id', x.target.value)} />
       </div>
       <div className="f"><label>मुख्य छायाचित्र</label>
         {f.main_image_key && <img src={`/media/${f.main_image_key}`} alt="" style={{ maxWidth: 260, display: 'block', marginBottom: '.4rem' }} />}
