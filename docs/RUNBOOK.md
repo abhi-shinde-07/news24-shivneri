@@ -4,13 +4,13 @@ Short, practical steps for the person running the site. Commands run from the pr
 
 ## 1. Take a manual backup
 - **Easiest:** Admin → Dashboard → **आता बॅकअप घ्या**. This writes every content table as JSON to R2 under
-  `backups/YYYY-MM-DD/` and keeps only the newest 14 days.
+  `backups/latest/` and replaces the previous copy (one backup only, text tables only, no images).
+  It also runs automatically every night at 02:30 IST. For older history use D1 Time Travel (section 2).
 - **Full SQL copy of the live database** (to your computer):
   ```
   npx wrangler d1 export news24-db --remote --output=backup-YYYY-MM-DD.sql
   ```
   Keep this file private: it contains the admin password hashes.
-- Daily automatic backups need a Cron Trigger in `wrangler.jsonc`. It is not switched on yet; ask before adding it.
 
 ## 2. Restore from a backup
 1. Best option: restore from an SQL export (step 1):
@@ -18,7 +18,7 @@ Short, practical steps for the person running the site. Commands run from the pr
    npx wrangler d1 execute news24-db --remote --file=backup-YYYY-MM-DD.sql
    ```
    Run it against an empty database (create a new D1 database, apply it, then point `database_id` in `wrangler.jsonc` at it).
-2. From the R2 JSON backups: download `backups/<date>/<table>.json` from the Cloudflare dashboard (R2 → news24-media)
+2. From the R2 JSON backups: download `backups/latest/<table>.json` from the Cloudflare dashboard (R2 → news24-media)
    and re-insert the rows you need. Use this to recover single articles or settings.
 3. D1 also has **Time Travel** (last 30 days, free):
    ```

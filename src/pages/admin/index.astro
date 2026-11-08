@@ -10,7 +10,7 @@ const db = getDB(Astro.locals);
 if (Astro.request.method === 'POST') {
   try {
     const r = await runBackup(db, getBucket() as any);
-    return back(Astro.url, `बॅकअप पूर्ण: backups/${r.day}/ (${r.tables} टेबल, ${(r.bytes / 1024).toFixed(0)} KB). शेवटचे ${r.kept} दिवस ठेवले आहेत.`);
+    return back(Astro.url, `बॅकअप पूर्ण: backups/latest/ (${r.tables} टेबल, ${(r.bytes / 1024).toFixed(0)} KB). जुना बॅकअप बदलला.`);
   } catch (e) {
     return back(Astro.url, `बॅकअप अयशस्वी: ${(e as Error).message}`, true);
   }
@@ -57,7 +57,7 @@ const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
 
   <h3>बॅकअप</h3>
   <div class="card">
-    <p style="margin-top:0">शेवटचा बॅकअप: <b>{other?.last_backup ?? 'अद्याप नाही'}</b>. बॅकअप R2 मध्ये <code>backups/YYYY-MM-DD/</code> येथे ठेवले जातात (शेवटचे १४).</p>
+    <p style="margin-top:0">शेवटचा बॅकअप: <b>{other?.last_backup ?? 'अद्याप नाही'}</b>. बॅकअप R2 मध्ये <code>backups/latest/</code> येथे एकच प्रत ठेवली जाते; दररोज रात्री ती नव्याने बदलली जाते (फक्त मजकूर, फोटो नाहीत).</p>
     <form method="post"><button type="submit">आता बॅकअप घ्या</button></form>
   </div>
 
