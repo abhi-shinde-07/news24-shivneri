@@ -5,11 +5,12 @@ import '@fontsource/noto-serif-devanagari/700.css';
 import '@fontsource/noto-serif-devanagari/800.css';
 import '../styles/newspaper.css';
 import AdSlot from '../components/AdSlot.astro';
-import { getDB, getNavCategories } from '../lib/db';
+import { getDB, getNavCategories, getLatest } from '../lib/db';
 import { getSettings } from '../lib/settings';
 const db = getDB(Astro.locals);
 const s = await getSettings(db, Astro.locals);
-const cats = await getNavCategories(db);
+const [cats, { articles: ticker }] = await Promise.all([getNavCategories(db), getLatest(db, 1, 12)]);
+const today = new Date().toLocaleDateString('mr-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 const {
   title = `${s.site_name} – ${s.motto}`,
   description = s.seo_description,
@@ -61,16 +62,37 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
 </head>
 <body>
   <a class="skip" href="#main">मुख्य मजकुराकडे जा</a>
+  <div class="topbar">
+    <div class="wrap topbar-in">
+      <span class="tb-date">{today}</span>
+      {ticker.length > 0 && (
+        <div class="ticker" aria-label="ताज्या घडामोडी">
+          <span class="ticker-label">ताज्या घडामोडी</span>
+          <div class="ticker-track"><ul>
+            {[...ticker, ...ticker].map((a, i) => <li aria-hidden={i >= ticker.length ? 'true' : undefined}><a href={`/news/${a.id}`} tabindex={i >= ticker.length ? -1 : undefined}>{a.headline}</a></li>)}
+          </ul></div>
+        </div>)}
+      <a class="tb-link" href="/epaper">ई-पेपर</a>
+    </div>
+  </div>
+  <header class="masthead">
+    <div class="wrap mast-in">
+      <a href="/" class="mast-logo"><img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" fetchpriority="high" /></a>
+      <a href="/" class="mast-title">
+        <span class="mast-name"><span>न्यूज २४</span> <b>शिवनेरी</b></span>
+        <span class="mast-motto">{s.motto}</span>
+        <span class="mast-sub">पुणे जिल्ह्याचे विश्वासार्ह मराठी डिजिटल वृत्तपत्र</span>
+      </a>
+      <div class="mast-side">
+        <span class="mast-ed">{s.edition}</span>
+        <span class="mast-day">{today}</span>
+        <a class="btn" href="/epaper">आजचा ई-पेपर वाचा →</a>
+      </div>
+    </div>
+  </header>
+  <nav class="nav" aria-label="मुख्य मेनू"><div class="wrap"><ul>{nav.map(([t, h]) =>
+    <li><a href={h} aria-current={(h === '/' ? path === '/' : path.startsWith(h)) ? 'page' : undefined}>{t}</a></li>)}</ul></div></nav>
   <div class="wrap">
-    <div class="dateline"><span id="today"></span><span>{s.edition} · पुणे जिल्हा</span></div>
-    <header class="masthead">
-      <a class="ear" href="/latest"><b>ताज्या बातम्या</b>पुणे जिल्ह्यातील प्रत्येक घडामोड</a>
-      <a class="ear right" href="/epaper"><b>आजचा ई-पेपर</b>वाचा व डाउनलोड करा →</a>
-      <a href="/" class="logo"><img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" fetchpriority="high" /></a>
-      <p class="tag">{s.motto}</p>
-    </header>
-    <nav class="nav" aria-label="मुख्य मेनू"><ul>{nav.map(([t, h]) =>
-      <li><a href={h} aria-current={(h === '/' ? path === '/' : path.startsWith(h)) ? 'page' : undefined}>{t}</a></li>)}</ul></nav>
     <AdSlot position="top" />
     <main id="main"><slot /></main>
     <AdSlot position="bottom" />

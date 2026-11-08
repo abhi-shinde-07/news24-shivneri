@@ -7,7 +7,7 @@ import { getDB, getHome, getCategoryBlocks, getFeaturedVideos, getLatestEpaper }
 import { thumbOf } from '../lib/mediaUrl';
 import { fmtDay } from '../lib/format';
 const db = getDB(Astro.locals);
-const [{ lead, others, more, top, breaking }, blocks, videos, epaper] =
+const [{ lead, others, more, top, grid, breaking }, blocks, videos, epaper] =
   await Promise.all([getHome(db), getCategoryBlocks(db), getFeaturedVideos(db, 4), getLatestEpaper(db)]);
 Astro.response.headers.set('Cache-Control', 'public, max-age=60');
 const ld = JSON.stringify({
@@ -58,6 +58,17 @@ const ld = JSON.stringify({
     </div>
   </section>)}
   <AdSlot position="in_between" />
+  {grid.length > 0 && (
+    <section>
+      <h2 class="section-head"><a href="/latest">आणखी बातम्या <span aria-hidden="true">›</span></a></h2>
+      <div class="tgrid">{grid.map((a) => (
+        <a class="tcard" href={`/news/${a.id}`}>
+          {thumbOf(a) ? <img src={thumbOf(a)!} alt="" loading="lazy" width="400" height="225" /> : <span class="tnone">NEWS24 शिवनेरी</span>}
+          <span class="kicker">{a.category_name}</span>
+          <b>{a.headline}</b>
+          {a.location_label && <small>{a.location_label}</small>}
+        </a>))}</div>
+    </section>)}
   {blocks.length > 0 && (
     <section class="blocks">
       {blocks.map((b) => (

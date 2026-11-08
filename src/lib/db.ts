@@ -31,12 +31,12 @@ export const getNavCategories = async (db: D1) =>
 
 export async function getHome(db: D1) {
   const { results } = await db.prepare(
-    `SELECT ${LIST} ${FROM} WHERE ${LIVE} ORDER BY a.published_at DESC LIMIT 18`).all<ArticleItem>();
+    `SELECT ${LIST} ${FROM} WHERE ${LIVE} ORDER BY a.published_at DESC LIMIT 27`).all<ArticleItem>();
   const leadIdx = Math.max(0, results.findIndex((a) => a.is_featured));
   const lead = results[leadIdx] ?? null;
   const rest = results.filter((_, i) => i !== leadIdx);
   const breaking = results.filter((a) => a.is_breaking);
-  return { lead, others: rest.slice(0, 3), more: rest.slice(3, 7), top: rest.slice(7, 15), breaking };
+  return { lead, others: rest.slice(0, 3), more: rest.slice(3, 7), top: rest.slice(7, 15), grid: rest.slice(15, 23), breaking };
 }
 
 // Up to 4 recent articles per active category, in one query.

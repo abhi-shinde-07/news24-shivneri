@@ -30,19 +30,29 @@ const meters = [
   ['D1 डेटाबेस आकार', u.d1, D1_LIMIT, fmtSize(u.d1) + ' / 5 GB'],
   ['आजचे D1 writes (अंदाजे, admin बाजूचे)', u.writesToday, WRITES_LIMIT, `${u.writesToday.toLocaleString('mr-IN')} / 1,00,000`],
 ] as const;
+const STATUS: Record<string, string> = { published: '✅ प्रकाशित', draft: '📝 ड्राफ्ट', archived: '📦 आर्काइव्ह' };
 const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
 ---
 <AdminLayout title="Dashboard">
-  <h2>नमस्कार, {Astro.locals.user?.name}</h2>
+  <h2>नमस्कार, {Astro.locals.user?.name} 🙏</h2>
+  <p style="margin-top:-.4rem;color:#52525b">काय करायचे आहे? खालीलपैकी एक निवडा.</p>
+  <div class="tiles">
+    <a class="tile primary" href="/admin/articles/new"><span class="ti">✍️</span><b>नवीन बातमी लिहा</b><small>शीर्षक, मजकूर, फोटो किंवा YouTube व्हिडिओ</small></a>
+    <a class="tile" href="/admin/articles"><span class="ti">📰</span><b>बातम्या बदला / हटवा</b><small>प्रकाशित, ड्राफ्ट आणि जुन्या बातम्या</small></a>
+    <a class="tile" href="/admin/media"><span class="ti">🖼️</span><b>फोटो अपलोड करा</b><small>बातमी व गॅलरीसाठी फोटो</small></a>
+    <a class="tile" href="/admin/videos"><span class="ti">🎬</span><b>YouTube व्हिडिओ जोडा</b><small>लिंक पेस्ट करा, शीर्षक लिहा</small></a>
+    <a class="tile" href="/admin/epaper"><span class="ti">📄</span><b>ई-पेपर अपलोड करा</b><small>आजची PDF आवृत्ती</small></a>
+    <a class="tile" href="/admin/ads"><span class="ti">📢</span><b>जाहिरात जोडा</b><small>फोटो, लिंक आणि तारखा</small></a>
+  </div>
+  <h3>आकडेवारी</h3>
   <div class="cards">
-    <a class="card" href="/admin/articles?status=published"><b>{n('published')}</b>Published</a>
-    <a class="card" href="/admin/articles?status=draft"><b>{n('draft')}</b>Draft</a>
-    <a class="card" href="/admin/articles?status=archived"><b>{n('archived')}</b>Archived</a>
+    <a class="card" href="/admin/articles?status=published"><b>{n('published')}</b>प्रकाशित बातम्या</a>
+    <a class="card" href="/admin/articles?status=draft"><b>{n('draft')}</b>ड्राफ्ट (अप्रकाशित)</a>
+    <a class="card" href="/admin/articles?status=archived"><b>{n('archived')}</b>आर्काइव्ह (लपवलेल्या)</a>
     <a class="card" href="/admin/ads"><b>{other?.ads ?? 0}</b>चालू जाहिराती</a>
     <a class="card" href="/admin/videos"><b>{other?.videos ?? 0}</b>व्हिडिओ</a>
     <a class="card" href="/admin/epaper"><b>{other?.epapers ?? 0}</b>ई-पेपर</a>
   </div>
-  <p><a class="button" href="/admin/articles/new">+ नवीन बातमी</a></p>
 
   <h3>मोफत मर्यादा (Usage guard)</h3>
   <div class="card">
@@ -63,6 +73,6 @@ const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
 
   <h3>अलीकडील बातम्या</h3>
   <div class="tablewrap"><table><thead><tr><th>शीर्षक</th><th>स्थिती</th><th>अद्यतनित</th></tr></thead><tbody>
-    {recent.map((a) => <tr><td><a href={`/admin/articles/${a.id}`}>{a.headline}</a></td><td>{a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
+    {recent.map((a) => <tr><td><a href={`/admin/articles/${a.id}`}>{a.headline}</a></td><td>{STATUS[a.status] ?? a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
   </tbody></table></div>
 </AdminLayout>

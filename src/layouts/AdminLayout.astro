@@ -6,13 +6,31 @@ const { title = 'Dashboard' } = Astro.props;
 const user = Astro.locals.user;
 const usage = await getUsage(getDB(Astro.locals));
 const { ok, err } = flash(Astro.url);
-const menu = [
-  ['Dashboard', '/admin'], ['बातमी व्यवस्थापन', '/admin/articles'], ['जाहिरात व्यवस्थापन', '/admin/ads'],
-  ['Media Library', '/admin/media'], ['व्हिडिओ व्यवस्थापन', '/admin/videos'], ['ई-पेपर व्यवस्थापन', '/admin/epaper'],
-  ['Categories', '/admin/categories'], ['SEO Settings', '/admin/seo'], ['Website Settings', '/admin/settings'],
-  ['सुरक्षा / पासवर्ड', '/admin/security'],
-] as const;
+// Grouped menu: [group, [[icon, label, href]]]
+const menu: [string, [string, string, string][]][] = [
+  ['', [['🏠', 'मुख्य पान (डॅशबोर्ड)', '/admin']]],
+  ['बातम्या', [['✍️', 'नवीन बातमी लिहा', '/admin/articles/new'], ['📰', 'सर्व बातम्या', '/admin/articles']]],
+  ['फोटो, व्हिडिओ, ई-पेपर', [['🖼️', 'फोटो लायब्ररी', '/admin/media'], ['🎬', 'व्हिडिओ (YouTube)', '/admin/videos'], ['📄', 'ई-पेपर (PDF)', '/admin/epaper']]],
+  ['जाहिराती', [['📢', 'जाहिराती', '/admin/ads']]],
+  ['सेटिंग्ज', [['🗂️', 'विभाग (Categories)', '/admin/categories'], ['🌐', 'वेबसाइट माहिती', '/admin/settings'], ['🔎', 'Google / SEO', '/admin/seo'], ['🔒', 'पासवर्ड व सुरक्षा', '/admin/security']]],
+];
 const path = Astro.url.pathname;
+const isOn = (h: string) => path === h || (h !== '/admin' && h !== '/admin/articles/new' && path.startsWith(h) && !(h === '/admin/articles' && path === '/admin/articles/new'));
+// One-line help shown at the top of each admin page (longest matching path wins).
+const HELP: [string, string][] = [
+  ['/admin/articles/new', 'शीर्षक, विभाग, लेखक आणि स्रोत भरा. मजकूर लिहा, हवे असल्यास फोटो किंवा YouTube लिंक जोडा. “ड्राफ्ट” = फक्त तुम्हाला दिसेल; “प्रकाशित करा” = लगेच वेबसाइटवर.'],
+  ['/admin/articles/', 'बदल करून “अद्यतनित करा” दाबा. चूक दुरुस्त केल्यास खाली “सुधारणा” लिहा – ती वाचकांना दिसते. जुन्या आवृत्त्या पानाच्या शेवटी “संपादन इतिहास” मध्ये आहेत.'],
+  ['/admin/articles', 'सर्व बातम्यांची यादी. शीर्षकावर क्लिक करून संपादित करा. लपवायची असल्यास संपादन पानात “आर्काइव्ह”; कायमची काढायची असल्यास “हटवा”.'],
+  ['/admin/media', 'येथे फोटो अपलोड करा (आपोआप लहान होतात). “फोटो गॅलरीत दाखवा” निवडल्यास फोटो /photos पानावर दिसतो. बातमीत वापरलेला फोटो हटवता येत नाही.'],
+  ['/admin/videos', 'YouTube व्हिडिओची लिंक पेस्ट करा, मराठी शीर्षक लिहा आणि जतन करा. “Featured” केलेले व्हिडिओ मुख्यपृष्ठावर दिसतात.'],
+  ['/admin/epaper', 'त्या दिवसाची PDF निवडून अपलोड करा. पहिल्या पानाचे चित्र आपोआप तयार होते. जागा वाचवण्यासाठी जुन्या PDF ठराविक महिन्यांनी हटवा.'],
+  ['/admin/ads', 'जाहिरातदाराचे नाव, फोटो, लिंक, जागा आणि तारखा भरा. तारखेनंतर जाहिरात आपोआप बंद होते. फक्त क्लिक मोजले जातात.'],
+  ['/admin/categories', 'मेनूमधील विभाग. नाव व क्रम बदलू शकता. ज्या विभागात बातम्या आहेत तो हटवता येत नाही – तो “लपवा”.'],
+  ['/admin/settings', 'संपादकाचे नाव, फोन, पत्ता, सोशल मीडिया लिंक – ही माहिती संपर्क व आमच्याबद्दल पानांवर दिसते. [कंसातील] मजकूर बदलून खरी माहिती भरा.'],
+  ['/admin/seo', 'Google मध्ये वेबसाइट कशी दिसावी ते येथे. Google Search Console चा verification टॅग येथे पेस्ट करा.'],
+  ['/admin/security', 'पासवर्ड नियमित बदला (किमान १२ अक्षरे). अधिक सुरक्षिततेसाठी फोनवरील Authenticator ॲपची दुसरी पायरी चालू करा.'],
+];
+const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length - a[0].length)[0]?.[1];
 ---
 <!doctype html>
 <html lang="mr"><head>
@@ -24,7 +42,11 @@ const path = Astro.url.pathname;
   body{margin:0;font-family:system-ui,'Noto Sans Devanagari',sans-serif;background:#f4f4f5;color:#18181b;display:flex;min-height:100vh}
   aside{width:230px;background:#18181b;color:#e4e4e7;padding:1rem;flex-shrink:0}
   aside .brand{display:flex;gap:.6rem;align-items:center;margin:0 0 1rem;color:#fff;font-weight:700;font-size:.95rem;line-height:1.3}
-  aside .brand img{width:44px;height:44px;border-radius:6px} aside a{display:block;padding:.45rem .6rem;border-radius:4px;color:inherit;text-decoration:none;font-size:.95rem}
+  aside .brand img{width:44px;height:44px;border-radius:6px} aside .brand small{display:block;font-weight:400;color:#a1a1aa;font-size:.8rem}
+  aside .grp{margin:1rem 0 .25rem;padding:0 .6rem;font-size:.72rem;letter-spacing:.06em;color:#a1a1aa;text-transform:uppercase} aside .ic{display:inline-block;width:1.6rem}
+  .help{background:#eff6ff;border-left:4px solid #2563eb;color:#1e3a8a;padding:.6rem .9rem;border-radius:4px;margin:0 0 1rem;font-size:.92rem;line-height:1.6}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem;margin:1rem 0 1.5rem} .tile{background:#fff;border:1px solid #d4d4d8;border-radius:8px;padding:1rem;text-decoration:none;color:#18181b;display:block;transition:border-color .15s,box-shadow .15s} .tile:hover{border-color:#b3001b;box-shadow:0 2px 8px rgba(179,0,27,.12)} .tile .ti{font-size:1.7rem;display:block} .tile b{display:block;margin:.3rem 0 .15rem;font-size:1.02rem} .tile small{color:#52525b;line-height:1.45;display:block}
+  .tile.primary{background:#b3001b;color:#fff;border-color:#b3001b} .tile.primary small{color:#ffe4e6} aside a{display:block;padding:.45rem .6rem;border-radius:4px;color:inherit;text-decoration:none;font-size:.95rem}
   aside a:hover,aside a.on{background:#3f3f46} aside .site{margin-top:.6rem;border:1px solid #3f3f46}
   main{flex:1;padding:1.5rem;max-width:1100px;min-width:0} h2{margin-top:0} a{color:#b3001b}
   .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin:1rem 0}
@@ -50,22 +72,26 @@ const path = Astro.url.pathname;
   .badge{display:inline-block;font-size:.75rem;padding:.1rem .45rem;border-radius:9px;background:#e4e4e7}.badge.on{background:#dcfce7;color:#14532d}.badge.off{background:#fee2e2;color:#7f1d1d}
   .meter{height:10px;background:#e4e4e7;border-radius:5px;overflow:hidden;margin:.4rem 0}.meter i{display:block;height:100%;background:#16a34a}.meter i.w{background:#d97706}.meter i.r{background:#dc2626}
   .inline{display:inline}
-  @media(max-width:760px){body{flex-direction:column}aside{width:auto}aside nav{display:flex;flex-wrap:wrap;gap:.2rem}main{padding:1rem}}
+  @media(max-width:760px){body{flex-direction:column}aside{width:auto;padding:.7rem}aside .brand{margin-bottom:.5rem}aside nav{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:.3rem;padding-bottom:.3rem}aside nav a{white-space:nowrap;background:#27272a}aside .grp{display:none}aside form{margin-top:.4rem!important}main{padding:1rem}}
 </style></head>
 <body data-usage={usage.pct.toFixed(1)}>
 <aside>
-  <div class="brand"><img src="/apple-touch-icon.png" alt="" />NEWS24 SHIVNERI<br />ADMIN</div>
+  <div class="brand"><img src="/apple-touch-icon.png" alt="" /><span>न्यूज २४ शिवनेरी<small>व्यवस्थापन (Admin)</small></span></div>
   <nav>
-    {menu.map(([t, h]) => <a class={path === h || (h !== '/admin' && path.startsWith(h)) ? 'on' : ''} href={h}>{t}</a>)}
-    <a class="site" href="/" target="_blank" rel="noopener">वेबसाइट पहा ↗</a>
+    {menu.map(([group, items]) => <>
+      {group && <p class="grp">{group}</p>}
+      {items.map(([icon, t, h]) => <a class={isOn(h) ? 'on' : ''} href={h}><span class="ic" aria-hidden="true">{icon}</span>{t}</a>)}
+    </>)}
+    <a class="site" href="/" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">↗</span>वेबसाइट पहा</a>
   </nav>
-  <form method="post" action="/admin/logout" style="margin-top:1rem"><button class="link" type="submit">Logout ({user?.name})</button></form>
+  <form method="post" action="/admin/logout" style="margin-top:1rem"><button class="link" type="submit">⏻ बाहेर पडा ({user?.name})</button></form>
 </aside>
 <main>
   {usage.pct >= 80 && <p class="warn red" role="alert"><b>सावधान:</b> मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. पुढील अपलोड/बदल केल्यास Cloudflare चे सशुल्क वापर सुरू होऊ शकते. <a href="/admin">तपशील</a></p>}
   {usage.pct >= 70 && usage.pct < 80 && <p class="warn">मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. <a href="/admin">तपशील</a></p>}
   {ok && <p class="msg ok" role="status">{ok}</p>}
   {err && <p class="msg err" role="alert">{err}</p>}
+  {help && <p class="help"><b>ℹ️ कसे वापरावे:</b> {help}</p>}
   <slot />
 </main>
 <script is:inline>

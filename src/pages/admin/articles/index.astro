@@ -20,9 +20,9 @@ const rows = (await db.prepare(
 const badge = (s: string) => (s === 'published' ? 'on' : s === 'archived' ? 'off' : '');
 ---
 <AdminLayout title="बातमी व्यवस्थापन">
-  <h2>बातमी व्यवस्थापन</h2>
+  <h2>📰 सर्व बातम्या</h2>
   <p><a class="button" href="/admin/articles/new">+ नवीन बातमी</a>
-     &nbsp; <a href="/admin/articles">सर्व</a> · <a href="/admin/articles?status=draft">Draft</a> · <a href="/admin/articles?status=published">Published</a> · <a href="/admin/articles?status=archived">Archived</a></p>
+     &nbsp; <a href="/admin/articles">सर्व</a> · <a href="/admin/articles?status=published">✅ प्रकाशित</a> · <a href="/admin/articles?status=draft">📝 ड्राफ्ट</a> · <a href="/admin/articles?status=archived">📦 आर्काइव्ह</a></p>
   <form method="get" style="display:flex;gap:.5rem;margin-bottom:.8rem;max-width:480px">
     {status && <input type="hidden" name="status" value={status} />}
     <input name="q" value={q} placeholder="शीर्षकात शोधा…" style="flex:1;padding:.45rem;border:1px solid #a1a1aa;border-radius:4px;font:inherit" />
@@ -32,7 +32,7 @@ const badge = (s: string) => (s === 'published' ? 'on' : s === 'archived' ? 'off
     {rows.length === 0 && <tr><td colspan="5">बातमी सापडली नाही.</td></tr>}
     {rows.map((a) => <tr>
       <td><a href={`/admin/articles/${a.id}`}>{a.headline}</a>{a.location_label && <small style="color:#71717a"> · {a.location_label}</small>}</td>
-      <td>{a.name_mr}</td><td><span class={`badge ${badge(a.status)}`}>{a.status}</span></td><td>{fmtDate(a.updated_at)}</td>
+      <td>{a.name_mr}</td><td><span class={`badge ${badge(a.status)}`}>{({ published: 'प्रकाशित', draft: 'ड्राफ्ट', archived: 'आर्काइव्ह' } as Record<string, string>)[a.status] ?? a.status}</span></td><td>{fmtDate(a.updated_at)}</td>
       <td style="white-space:nowrap">
         {a.status === 'published' && <a class="small" href={`/news/${a.id}`} target="_blank" rel="noopener">पहा</a>}
         <form method="post" class="inline"><input type="hidden" name="id" value={a.id} />
