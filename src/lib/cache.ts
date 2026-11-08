@@ -37,3 +37,9 @@ export async function seenRecently(key: string, seconds: number) {
   await cache.put(req, new Response('1', { headers: { 'Cache-Control': `max-age=${seconds}` } }));
   return false;
 }
+
+// Drop a cached entry right away (e.g. after an admin changes ads), instead of waiting for it to expire.
+export async function purgeCached(key: string) {
+  const cache: Cache | undefined = (globalThis as any).caches?.default;
+  if (cache) await cache.delete(new Request(`https://cache.news24.internal/${key}`));
+}

@@ -5,6 +5,8 @@ import { mediaUrl } from '../../../lib/mediaUrl';
 import { POSITIONS, POSITION_LABEL } from '../../../lib/ads';
 import { KEY_RE } from '../../../lib/media';
 import { readForm, isDate, isHttps } from '../../../lib/admin';
+import { purgeCached } from '../../../lib/cache';
+import { ADS_CACHE_KEY } from '../../../lib/ads';
 const db = getDB(Astro.locals);
 const isNew = Astro.params.id === 'new';
 const id = Number(Astro.params.id);
@@ -30,7 +32,8 @@ if (Astro.request.method === 'POST') {
     const vals = [d.advertiser, d.image_key, d.click_url, d.position, d.start_date, d.end_date, d.status];
     if (isNew) await db.prepare('INSERT INTO ads (advertiser, image_key, click_url, position, start_date, end_date, status) VALUES (?,?,?,?,?,?,?)').bind(...vals).first();
     else await db.prepare('UPDATE ads SET advertiser=?, image_key=?, click_url=?, position=?, start_date=?, end_date=?, status=? WHERE id=?').bind(...vals, id).first();
-    return Astro.redirect('/admin/ads?ok=' + encodeURIComponent('जाहिरात जतन केली. (५ मिनिटांत वेबसाइटवर दिसेल)'), 303);
+    await purgeCached(ADS_CACHE_KEY);
+    return Astro.redirect('/admin/ads?ok=' + encodeURIComponent('जाहिरात जतन केली. वेबसाइटवर लगेच दिसेल.'), 303);
   }
 }
 const media = (await db.prepare('SELECT key, filename FROM media ORDER BY id DESC LIMIT 120').all<{ key: string; filename: string | null }>()).results;

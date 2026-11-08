@@ -4,17 +4,21 @@ import { getDB } from '../../../lib/db';
 import { mediaUrl } from '../../../lib/mediaUrl';
 import { POSITION_LABEL, type Position } from '../../../lib/ads';
 import { back, readForm } from '../../../lib/admin';
+import { purgeCached } from '../../../lib/cache';
+import { ADS_CACHE_KEY } from '../../../lib/ads';
 const db = getDB(Astro.locals);
 if (Astro.request.method === 'POST') {
   const { str, int } = await readForm(Astro.request);
   const id = int('id');
   if (str('action') === 'delete') {
     await db.prepare('DELETE FROM ads WHERE id = ?').bind(id).first();
-    return back(Astro.url, 'जाहिरात हटवली. (५ मिनिटांत वेबसाइटवरून जाईल)');
+    await purgeCached(ADS_CACHE_KEY); // shows on the site immediately
+    return back(Astro.url, 'जाहिरात हटवली. (वेबसाइटवरून लगेच गेली)');
   }
   if (str('action') === 'toggle') {
     await db.prepare(`UPDATE ads SET status = CASE status WHEN 'active' THEN 'inactive' ELSE 'active' END WHERE id = ?`).bind(id).first();
-    return back(Astro.url, 'स्थिती बदलली. (५ मिनिटांत वेबसाइटवर दिसेल)');
+    await purgeCached(ADS_CACHE_KEY);
+    return back(Astro.url, 'स्थिती बदलली. (वेबसाइटवर लगेच लागू)');
   }
 }
 const ads = (await db.prepare(
@@ -25,7 +29,7 @@ const ads = (await db.prepare(
 <AdminLayout title="जाहिरात व्यवस्थापन">
   <h2>जाहिरात व्यवस्थापन</h2>
   <p><a class="button" href="/admin/ads/new">+ नवीन जाहिरात</a></p>
-  <p><small>फक्त क्लिक मोजले जातात (impressions नाहीत). एकाच वाचकाचे एका तासातील पुन्हा क्लिक आणि bots मोजले जात नाहीत. बदल वेबसाइटवर ५ मिनिटांत दिसतात.</small></p>
+  <p><small>फक्त क्लिक मोजले जातात (impressions नाहीत). एकाच वाचकाचे एका तासातील पुन्हा क्लिक आणि bots मोजले जात नाहीत. बदल वेबसाइटवर लगेच दिसतात (तुमच्या ब्राउझरमध्ये पान एकदा रिफ्रेश करा).</small></p>
   <div class="tablewrap"><table><thead><tr><th>प्रिव्ह्यू</th><th>जाहिरातदार</th><th>जागा</th><th>कालावधी</th><th>स्थिती</th><th>क्लिक</th><th></th></tr></thead><tbody>
     {ads.length === 0 && <tr><td colspan="7">अद्याप जाहिरात नाही.</td></tr>}
     {ads.map((a) => <tr>
