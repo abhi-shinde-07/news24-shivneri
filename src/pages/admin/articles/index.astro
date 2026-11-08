@@ -1,0 +1,18 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getDB } from '../../../lib/db';
+import { fmtDate } from '../../../lib/format';
+const status = ['draft', 'published', 'archived'].includes(Astro.url.searchParams.get('status') ?? '') ? Astro.url.searchParams.get('status') : null;
+const rows = (await getDB(Astro.locals).prepare(
+  `SELECT a.id, a.headline, a.status, a.updated_at, c.name_mr FROM articles a JOIN categories c ON c.id = a.category_id
+   WHERE (? IS NULL OR a.status = ?) ORDER BY a.updated_at DESC LIMIT 100`).bind(status, status)
+  .all<{ id: number; headline: string; status: string; updated_at: string; name_mr: string }>()).results;
+---
+<AdminLayout title="बातमी व्यवस्थापन">
+  <h2>बातमी व्यवस्थापन</h2>
+  <p><a href="/admin/articles/new"><button>+ नवीन बातमी</button></a>
+     &nbsp; <a href="/admin/articles">सर्व</a> · <a href="/admin/articles?status=draft">Draft</a> · <a href="/admin/articles?status=published">Published</a> · <a href="/admin/articles?status=archived">Archived</a></p>
+  <table><thead><tr><th>शीर्षक</th><th>विभाग</th><th>स्थिती</th><th>अद्यतनित</th></tr></thead><tbody>
+    {rows.map((a) => <tr><td><a href={`/admin/articles/${a.id}`}>{a.headline}</a></td><td>{a.name_mr}</td><td>{a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
+  </tbody></table>
+</AdminLayout>

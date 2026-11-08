@@ -8,14 +8,24 @@
     "preview": "wrangler dev",
     "deploy": "astro build && wrangler deploy",
     "db:local": "wrangler d1 migrations apply news24-db --local",
-    "db:remote": "wrangler d1 migrations apply news24-db --remote"
+    "db:remote": "wrangler d1 migrations apply news24-db --remote",
+    "db:seed-local": "wrangler d1 execute news24-db --local --file=seed/sample.sql",
+    "admin:create": "node scripts/make-admin.mjs",
+    "db:admin-local": "wrangler d1 execute news24-db --local --file=seed/admin.sql"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^12.0.0",
     "@astrojs/react": "^4.0.0",
+    "@tiptap/core": "^2.11.0",
+    "@tiptap/extension-link": "^2.11.0",
+    "@tiptap/extension-underline": "^2.11.0",
+    "@tiptap/pm": "^2.11.0",
+    "@tiptap/react": "^2.11.0",
+    "@tiptap/starter-kit": "^2.11.0",
     "astro": "^5.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "xss": "^1.0.15"
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

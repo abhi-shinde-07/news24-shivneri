@@ -1,0 +1,38 @@
+---
+import Base from '../../layouts/Base.astro';
+import AdSlot from '../../components/AdSlot.astro';
+import { getDB, getArticle } from '../../lib/db';
+import { fmtDate } from '../../lib/format';
+import { mediaUrl, rewriteBody } from '../../lib/mediaUrl';
+const id = Number(Astro.params.id);
+const data = Number.isInteger(id) ? await getArticle(getDB(Astro.locals), id) : null;
+if (!data) return new Response('बातमी सापडली नाही', { status: 404 });
+const { article: a, corrections } = data;
+const edited = a.updated_at > a.published_at;
+const ld = JSON.stringify({
+  '@context': 'https://schema.org', '@type': 'NewsArticle', headline: a.headline,
+  datePublished: a.published_at, dateModified: a.updated_at,
+  author: { '@type': 'Person', name: a.byline }, publisher: { '@type': 'Organization', name: 'NEWS24 SHIVNERI' },
+  inLanguage: 'mr',
+}).replace(/</g, '\\u003c');
+---
+<Base title={`${a.headline} – NEWS24 SHIVNERI`} description={a.subtitle ?? a.headline}>
+  <script slot="head" type="application/ld+json" set:html={ld} />
+  <article class="article-body">
+    <p class="byline"><a href={`/category/${a.category_slug}`}>{a.category_name}</a>{a.location_label && <> · {a.location_label}</>}</p>
+    <h1 class="h-lead">{a.headline}</h1>
+    {a.subtitle && <p class="deck">{a.subtitle}</p>}
+    <p class="byline"><b>{a.byline}</b> · स्रोत: {a.source}</p>
+    <p class="byline">प्रकाशित: {fmtDate(a.published_at)}{edited && <> · अद्यतनित: {fmtDate(a.updated_at)}</>}</p>
+    {a.main_image_key && <img src={mediaUrl(a.main_image_key)} alt={a.main_image_caption ?? a.headline} />}
+    {(a.main_image_caption || a.image_credit) && <p class="caption">{a.main_image_caption}{a.image_credit && <> · श्रेय: {a.image_credit}</>}</p>}
+    <AdSlot position="in_between" />
+    <!-- body_html is sanitized when saved (Phase 5) -->
+    <div set:html={rewriteBody(a.body_html)} />
+    {corrections.length > 0 && (
+      <section aria-label="सुधारणा">
+        {corrections.map((c) => <div class="correction"><b>सुधारणा</b> ({fmtDate(c.created_at)}): {c.note}</div>)}
+      </section>
+    )}
+  </article>
+</Base>

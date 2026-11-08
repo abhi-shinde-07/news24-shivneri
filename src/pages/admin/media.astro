@@ -1,0 +1,8 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import MediaGrid from '../../components/MediaGrid';
+---
+<AdminLayout title="Media Library">
+  <h2>Media Library</h2>
+  <MediaGrid client:only="react" allowDelete />
+</AdminLayout>

@@ -1,0 +1,20 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ArticleEditor from '../../../components/ArticleEditor';
+import { getDB } from '../../../lib/db';
+const db = getDB(Astro.locals);
+const id = Number(Astro.params.id);
+const a = Number.isInteger(id) ? await db.prepare('SELECT * FROM articles WHERE id = ?').bind(id).first<any>() : null;
+if (!a) return new Response('बातमी सापडली नाही', { status: 404 });
+const cats = (await db.prepare('SELECT id, name_mr FROM categories WHERE is_active = 1 ORDER BY sort_order').all<{ id: number; name_mr: string }>()).results;
+const corrections = (await db.prepare('SELECT note, created_at FROM corrections WHERE article_id = ? ORDER BY created_at DESC').bind(id).all<{ note: string; created_at: string }>()).results;
+const initial = {
+  id, headline: a.headline, subtitle: a.subtitle ?? '', body_html: a.body_html, category_id: a.category_id,
+  location_label: a.location_label ?? '', byline: a.byline, source: a.source, image_credit: a.image_credit ?? '', main_image_key: a.main_image_key ?? '', main_image_caption: a.main_image_caption ?? '',
+  is_featured: !!a.is_featured, is_breaking: !!a.is_breaking, status: a.status,
+};
+---
+<AdminLayout title="बातमी संपादित करा">
+  <h2>बातमी संपादित करा {a.status === 'published' && <a href={`/news/${id}`} target="_blank" rel="noopener" style="font-size:.9rem">(वेबसाइटवर पहा)</a>}</h2>
+  <ArticleEditor client:only="react" categories={cats} initial={initial} corrections={corrections} />
+</AdminLayout>

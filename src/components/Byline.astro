@@ -1,0 +1,5 @@
+---
+import { fmtDate } from '../lib/format';
+const { a } = Astro.props;
+---
+<p class="byline"><b>{a.byline}</b> · स्रोत: {a.source}{a.location_label && <> · {a.location_label}</>} · {fmtDate(a.published_at)}</p>

@@ -2,11 +2,11 @@ import { defineConfig } from 'astro/config';
 import cloudflare from '@astrojs/cloudflare';
 import react from '@astrojs/react';
 
-// Public pages are prerendered (static = free, unlimited on Cloudflare).
-// Only routes with `export const prerender = false` (admin, API) run Worker code.
+// Pages render on the Worker so new articles appear without a rebuild.
+// Free plan: 100,000 Worker requests/day; usage guard comes in a later phase.
 export default defineConfig({
   site: 'https://www.news24shivneri.in',
-  output: 'static',
+  output: 'server',
   adapter: cloudflare({ platformProxy: { enabled: true } }),
   integrations: [react()],
 });

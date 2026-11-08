@@ -1,0 +1,46 @@
+---
+import { getDB } from '../../lib/db';
+import { getUser, verifyPassword, createSession, sessionCookie, tooManyAttempts, recordFailure } from '../../lib/auth';
+const db = getDB(Astro.locals);
+if (await getUser(db, Astro.request)) return Astro.redirect('/admin');
+let error = '';
+if (Astro.request.method === 'POST') {
+  const ip = Astro.request.headers.get('cf-connecting-ip') ?? 'local';
+  if (await tooManyAttempts(db, ip)) {
+    error = 'खूप चुकीचे प्रयत्न झाले. १५ मिनिटांनी पुन्हा प्रयत्न करा.';
+  } else {
+    const f = await Astro.request.formData();
+    const email = String(f.get('email') ?? '').trim().toLowerCase();
+    const password = String(f.get('password') ?? '');
+    const user = await db.prepare('SELECT id, password_hash FROM users WHERE email = ?')
+      .bind(email).first<{ id: number; password_hash: string }>();
+    if (user && (await verifyPassword(password, user.password_hash))) {
+      const token = await createSession(db, user.id);
+      return new Response(null, { status: 303, headers: {
+        Location: '/admin', 'Set-Cookie': sessionCookie(token, Astro.url.protocol === 'https:') } });
+    }
+    await recordFailure(db, ip);
+    error = 'ईमेल किंवा पासवर्ड चुकीचा आहे.';
+  }
+}
+---
+<!doctype html>
+<html lang="mr"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" /><title>Admin Login – NEWS24 SHIVNERI</title>
+<style>
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f4f4f5;font-family:system-ui,'Noto Sans Devanagari',sans-serif}
+  form{background:#fff;border:1px solid #d4d4d8;border-radius:6px;padding:1.5rem;width:min(92vw,340px)}
+  h1{font-size:1.15rem;margin:0 0 1rem} label{display:block;font-size:.9rem;margin:.7rem 0 .25rem}
+  input{width:100%;box-sizing:border-box;padding:.55rem;border:1px solid #a1a1aa;border-radius:4px;font:inherit}
+  button{margin-top:1rem;width:100%;padding:.6rem;border:0;border-radius:4px;background:#b3001b;color:#fff;font:inherit;cursor:pointer}
+  .err{color:#b3001b;font-size:.9rem;margin:.7rem 0 0}
+</style></head>
+<body>
+<form method="post">
+  <h1>NEWS24 SHIVNERI – Admin</h1>
+  <label for="email">ईमेल</label><input id="email" name="email" type="email" autocomplete="username" required />
+  <label for="password">पासवर्ड</label><input id="password" name="password" type="password" autocomplete="current-password" required />
+  {error && <p class="err" role="alert">{error}</p>}
+  <button type="submit">लॉगिन</button>
+</form>
+</body></html>

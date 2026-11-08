@@ -65,3 +65,5 @@ img { max-width: 100%; display: block; }
 
 .footer { border-top: 3px double var(--rule); margin-top: 2rem; padding: 1rem 0 2rem; font-size: .92rem; color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; justify-content: space-between; }
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+.article-body img{width:100%;height:auto}.article-body figure{margin:1rem 0}.article-body figcaption{font-size:.85rem;color:var(--ink-soft);border-bottom:1px solid var(--rule-light);padding:.3rem 0}

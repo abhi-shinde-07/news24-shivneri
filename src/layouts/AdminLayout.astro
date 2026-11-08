@@ -1,0 +1,42 @@
+---
+const { title = 'Dashboard' } = Astro.props;
+const user = Astro.locals.user;
+const menu = [
+  ['Dashboard', '/admin', true], ['बातमी व्यवस्थापन', '/admin/articles', true], ['जाहिरात व्यवस्थापन', '', false],
+  ['Media Library', '/admin/media', true], ['व्हिडिओ व्यवस्थापन', '', false], ['ई-पेपर व्यवस्थापन', '', false],
+  ['Categories', '', false], ['SEO Settings', '', false], ['Website Settings', '', false],
+] as const;
+---
+<!doctype html>
+<html lang="mr"><head>
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex, nofollow" /><title>{title} – NEWS24 SHIVNERI Admin</title>
+<style>
+  body{margin:0;font-family:system-ui,'Noto Sans Devanagari',sans-serif;background:#f4f4f5;color:#18181b;display:flex;min-height:100vh}
+  aside{width:230px;background:#18181b;color:#e4e4e7;padding:1rem;flex-shrink:0}
+  aside h1{font-size:1rem;margin:0 0 1rem;color:#fff} aside a,aside span{display:block;padding:.45rem .6rem;border-radius:4px;color:inherit;text-decoration:none;font-size:.95rem}
+  aside a:hover,aside a.on{background:#3f3f46} aside span{opacity:.45}
+  main{flex:1;padding:1.5rem;max-width:1000px} h2{margin-top:0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin:1rem 0}
+  .card{background:#fff;border:1px solid #d4d4d8;border-radius:6px;padding:1rem} .card b{font-size:1.8rem;display:block}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #d4d4d8} th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid #e4e4e7;font-size:.92rem}
+  button{font:inherit;padding:.5rem .9rem;border:0;border-radius:4px;background:#b3001b;color:#fff;cursor:pointer} .link{background:none;color:#e4e4e7;padding:.45rem .6rem;text-align:left;width:100%}
+  .f{margin:.7rem 0}.f label{display:block;font-size:.9rem;margin-bottom:.25rem}.f input,.f select,.f textarea{width:100%;box-sizing:border-box;padding:.5rem;border:1px solid #a1a1aa;border-radius:4px;font:inherit;background:#fff}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.chk{display:flex;gap:.4rem;align-items:center;font-size:.95rem}
+  .toolbar{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem}.tb{background:#fff;color:#18181b;border:1px solid #a1a1aa;padding:.3rem .6rem;font-size:.85rem}.tb.act{background:#18181b;color:#fff}
+  .ProseMirror{min-height:320px;border:1px solid #a1a1aa;border-radius:4px;background:#fff;padding:.8rem 1rem;font-size:1.1rem;line-height:1.8;outline:none}.ProseMirror:focus{border-color:#b3001b}
+  .actions{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:1rem}.sec{background:#fff;color:#18181b;border:1px solid #a1a1aa}button:disabled{opacity:.5}
+  .corr{background:#fff;border-left:4px solid #b3001b;padding:.4rem .7rem;margin:.3rem 0}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50}.modal-body{background:#fff;width:min(94vw,900px);max-height:86vh;overflow:auto;padding:1rem;border-radius:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}.thumb{border:1px solid #d4d4d8;background:#fff;padding:0;cursor:pointer;color:inherit;text-align:left;font-size:.75rem;border-radius:4px;overflow:hidden}
+  .thumb img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.thumb span{display:block;padding:.25rem .4rem}.ProseMirror img{max-width:100%}.ProseMirror figure{margin:.8rem 0}.ProseMirror figcaption{font-size:.85rem;color:#52525b}
+  @media(max-width:700px){body{flex-direction:column}aside{width:auto}}
+</style></head>
+<body>
+<aside>
+  <h1>NEWS24 SHIVNERI<br />ADMIN</h1>
+  {menu.map(([t, h, on]) => on ? <a class={Astro.url.pathname === h || (h !== '/admin' && Astro.url.pathname.startsWith(h)) ? 'on' : ''} href={h}>{t}</a> : <span title="पुढील टप्प्यात">{t}</span>)}
+  <form method="post" action="/admin/logout" style="margin-top:1rem"><button class="link" type="submit">Logout ({user?.name})</button></form>
+</aside>
+<main><slot /></main>
+</body></html>

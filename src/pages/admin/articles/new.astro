@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import ArticleEditor from '../../../components/ArticleEditor';
+import { getDB } from '../../../lib/db';
+const cats = (await getDB(Astro.locals).prepare('SELECT id, name_mr FROM categories WHERE is_active = 1 ORDER BY sort_order').all<{ id: number; name_mr: string }>()).results;
+const initial = { headline: '', subtitle: '', body_html: '', category_id: '' as const, location_label: '', byline: Astro.locals.user?.name ?? '', source: '', image_credit: '', main_image_key: '', main_image_caption: '', is_featured: false, is_breaking: false, status: 'draft' };
+---
+<AdminLayout title="नवीन बातमी">
+  <h2>नवीन बातमी</h2>
+  <ArticleEditor client:only="react" categories={cats} initial={initial} />
+</AdminLayout>

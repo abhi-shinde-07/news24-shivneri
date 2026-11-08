@@ -1,0 +1,11 @@
+-- LOCAL TEST DATA ONLY. Remove before launch:  DELETE FROM articles WHERE source LIKE 'नमुना%';
+INSERT INTO articles (slug, headline, subtitle, body_html, category_id, location_label, byline, source, is_featured, is_breaking, status, published_at) VALUES
+('sample-1','शिवनेरी परिसरात नव्या पाणीपुरवठा योजनेला मंजुरी','ग्रामस्थांना पुढील वर्षापासून नियमित पाणी मिळण्याची अपेक्षा','<p>ही चाचणीसाठी नमुना बातमी आहे. प्रत्यक्ष बातमी प्रकाशित झाल्यावर येथे संपूर्ण मजकूर दिसेल.</p><p>दुसरा परिच्छेद येथे येईल.</p>',(SELECT id FROM categories WHERE slug='social'),'शिवनेरी','प्रतिनिधी','नमुना माहिती (चाचणी)',1,0,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-1 hours')),
+('sample-2','शेतकऱ्यांसाठी कांदा खरेदी केंद्र सुरू',NULL,'<p>नमुना मजकूर.</p>',(SELECT id FROM categories WHERE slug='agriculture'),'शिवनेरी','प्रतिनिधी','नमुना माहिती (चाचणी)',0,0,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-3 hours')),
+('sample-3','जिल्हा परिषद शाळेत विज्ञान प्रदर्शन',NULL,'<p>नमुना मजकूर.</p>',(SELECT id FROM categories WHERE slug='education'),NULL,'प्रतिनिधी','नमुना माहिती (चाचणी)',0,0,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-5 hours')),
+('sample-4','स्थानिक क्रिकेट स्पर्धेचा अंतिम सामना रविवारी',NULL,'<p>नमुना मजकूर.</p>',(SELECT id FROM categories WHERE slug='sports'),NULL,'क्रीडा प्रतिनिधी','नमुना माहिती (चाचणी)',0,0,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-7 hours')),
+('sample-5','आठवडी बाजारात भाजीपाल्याचे दर स्थिर',NULL,'<p>नमुना मजकूर.</p>',(SELECT id FROM categories WHERE slug='business'),NULL,'प्रतिनिधी','नमुना माहिती (चाचणी)',0,0,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-9 hours')),
+('sample-6','ग्रामसभेत विकासकामांवर चर्चा',NULL,'<p>नमुना मजकूर.</p>',(SELECT id FROM categories WHERE slug='politics'),NULL,'प्रतिनिधी','नमुना माहिती (चाचणी)',0,1,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-30 minutes')),
+('sample-7','गावच्या जत्रेत लोककला महोत्सव',NULL,'<p>नमुना मजकूर.</p>',(SELECT id FROM categories WHERE slug='entertainment'),NULL,'प्रतिनिधी','नमुना माहिती (चाचणी)',0,0,'published',strftime('%Y-%m-%dT%H:%M:%SZ','now','-11 hours'));
+INSERT INTO corrections (article_id, note) VALUES
+((SELECT id FROM articles WHERE slug='sample-1'),'पूर्वीच्या मजकुरात योजनेची रक्कम चुकीची दिली होती; ती दुरुस्त केली आहे. (नमुना)');

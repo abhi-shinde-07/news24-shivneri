@@ -5,9 +5,15 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": { "binding": "ASSETS", "directory": "./dist" },
   "d1_databases": [
-    { "binding": "DB", "database_name": "news24-db", "database_id": "REPLACE_WITH_ID_FROM_wrangler_d1_create", "migrations_dir": "migrations" }
+    {
+      "binding": "DB",
+      "database_name": "news24-db",
+      "database_id": "e0e39593-075c-4983-865d-56355825e094",
+      "migrations_dir": "migrations",
+      "remote": false
+    }
   ],
   "r2_buckets": [
-    { "binding": "MEDIA", "bucket_name": "news24-media" }
+    { "binding": "MEDIA", "bucket_name": "news24-media", "remote": false }
   ]
 }

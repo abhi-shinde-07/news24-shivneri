@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Byline from '../components/Byline.astro';
+import { getDB, getLatest } from '../lib/db';
+const articles = await getLatest(getDB(Astro.locals));
+---
+<Base title="ताज्या बातम्या – NEWS24 SHIVNERI">
+  <h1 class="section-head first">ताज्या बातम्या</h1>
+  {articles.length === 0 && <p class="deck">अद्याप बातम्या प्रकाशित झालेल्या नाहीत.</p>}
+  {articles.map((a) => <div class="item"><h2 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h2><Byline a={a} /></div>)}
+</Base>

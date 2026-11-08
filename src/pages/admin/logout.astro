@@ -1,0 +1,8 @@
+---
+import { getDB } from '../../lib/db';
+import { destroySession, clearCookie } from '../../lib/auth';
+if (Astro.request.method !== 'POST') return Astro.redirect('/admin');
+await destroySession(getDB(Astro.locals), Astro.request);
+return new Response(null, { status: 303, headers: {
+  Location: '/admin/login', 'Set-Cookie': clearCookie(Astro.url.protocol === 'https:') } });
+---

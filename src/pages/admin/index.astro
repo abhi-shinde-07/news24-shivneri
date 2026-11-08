@@ -1,0 +1,23 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { getDB } from '../../lib/db';
+import { fmtDate } from '../../lib/format';
+const db = getDB(Astro.locals);
+const counts = (await db.prepare('SELECT status, COUNT(*) AS n FROM articles GROUP BY status').all<{ status: string; n: number }>()).results;
+const n = (s: string) => counts.find((c) => c.status === s)?.n ?? 0;
+const recent = (await db.prepare(
+  `SELECT id, headline, status, published_at, updated_at FROM articles ORDER BY updated_at DESC LIMIT 8`)
+  .all<{ id: number; headline: string; status: string; published_at: string | null; updated_at: string }>()).results;
+---
+<AdminLayout title="Dashboard">
+  <h2>नमस्कार, {Astro.locals.user?.name}</h2>
+  <div class="cards">
+    <div class="card"><b>{n('published')}</b>Published</div>
+    <div class="card"><b>{n('draft')}</b>Draft</div>
+    <div class="card"><b>{n('archived')}</b>Archived</div>
+  </div>
+  <h3>अलीकडील बातम्या</h3>
+  <table><thead><tr><th>शीर्षक</th><th>स्थिती</th><th>अद्यतनित</th></tr></thead><tbody>
+    {recent.map((a) => <tr><td><a href={`/news/${a.id}`} target="_blank" rel="noopener">{a.headline}</a></td><td>{a.status}</td><td>{fmtDate(a.updated_at)}</td></tr>)}
+  </tbody></table>
+</AdminLayout>

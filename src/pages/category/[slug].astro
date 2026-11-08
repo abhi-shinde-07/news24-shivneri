@@ -1,0 +1,12 @@
+---
+import Base from '../../layouts/Base.astro';
+import Byline from '../../components/Byline.astro';
+import { getDB, getCategory } from '../../lib/db';
+const data = await getCategory(getDB(Astro.locals), Astro.params.slug ?? '');
+if (!data) return new Response('विभाग सापडला नाही', { status: 404 });
+---
+<Base title={`${data.name} – NEWS24 SHIVNERI`}>
+  <h1 class="section-head first">{data.name}</h1>
+  {data.articles.length === 0 && <p class="deck">या विभागात अद्याप बातम्या नाहीत.</p>}
+  {data.articles.map((a) => <div class="item"><h2 class="h-mid"><a href={`/news/${a.id}`}>{a.headline}</a></h2><Byline a={a} /></div>)}
+</Base>
