@@ -1,11 +1,12 @@
 ---
 import Byline from './Byline.astro';
 import { thumbOf } from '../lib/mediaUrl';
+import { catStyle } from '../lib/colors';
 // List item with a small photo (when the article has one).
 const { a, tag = 'h2', showCat = true } = Astro.props;
 const H = tag;
 ---
-<div class="item card">
+<div class="item card" style={catStyle(a.category_slug)}>
   {thumbOf(a, 'mqdefault') && <a href={`/news/${a.id}`} class="thumb" tabindex="-1" aria-hidden="true">
     <img src={thumbOf(a, 'mqdefault')!} alt="" loading="lazy" decoding="async" width="160" height="107" /></a>}
   <div>

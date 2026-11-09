@@ -75,8 +75,7 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
             {[...ticker, ...ticker].map((a, i) => <li aria-hidden={i >= ticker.length ? 'true' : undefined}><a href={`/news/${a.id}`} tabindex={i >= ticker.length ? -1 : undefined}>{a.headline}</a></li>)}
           </ul></div>
         </div>)}
-      {tel && <a class="tb-phone" href={`tel:${tel}`}>📞 {s.phone}</a>}
-      <a class="tb-link" href="/epaper">ई-पेपर</a>
+
     </div>
   </div>
   <header class="masthead">
@@ -85,18 +84,12 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
       <a href="/" class="mast-title">
         <span class="mast-name"><span>न्यूज २४</span> <b>शिवनेरी</b></span>
         <span class="mast-motto">{s.motto}</span>
-        <span class="mast-sub">पुणे जिल्ह्याचे विश्वासार्ह मराठी डिजिटल वृत्तपत्र</span>
       </a>
       <div class="mast-side">
-        <span class="mast-ed">{s.edition}</span>
         <span class="mast-day">{today}</span>
-        <div class="mast-contact">
-          <b>बातमी व जाहिरातीसाठी संपर्क</b>
-          {tel ? <a href={`tel:${tel}`}>📞 {s.phone}</a> : <a href="/contact">📞 संपर्क पान</a>}
-          {real(s.contact_email) && <a href={`mailto:${s.contact_email}`}>✉️ {s.contact_email}</a>}
-          {real(s.address) && <span>📍 {s.address.split(',')[0]}</span>}
-        </div>
-        <a class="btn" href="/epaper">आजचा ई-पेपर वाचा →</a>
+        {tel && <a href={`tel:${tel}`}>📞 {s.phone}</a>}
+        {real(s.contact_email) && <a href={`mailto:${s.contact_email}`}>✉️ {s.contact_email}</a>}
+        {real(s.address) && <span>📍 {s.address.split(',').slice(0, 2).join(',')}</span>}
       </div>
     </div>
   </header>

@@ -35,7 +35,8 @@ const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
 ---
 <AdminLayout title="Dashboard">
   <h2>नमस्कार, {Astro.locals.user?.name} 🙏</h2>
-  <p style="margin-top:-.4rem;color:#52525b">काय करायचे आहे? खालीलपैकी एक निवडा.</p>
+  <p style="margin-top:-.4rem;color:#57534e">काय करायचे आहे? खालीलपैकी एक निवडा.</p>
+  <button id="install-app" type="button">📲 हे ॲप फोन / कॉम्प्युटरवर इन्स्टॉल करा</button>
   <div class="tiles">
     <a class="tile primary" href="/admin/articles/new"><span class="ti">✍️</span><b>नवीन बातमी लिहा</b><small>शीर्षक, मजकूर, फोटो किंवा YouTube व्हिडिओ</small></a>
     <a class="tile" href="/admin/articles"><span class="ti">📰</span><b>बातम्या बदला / हटवा</b><small>प्रकाशित, ड्राफ्ट आणि जुन्या बातम्या</small></a>
@@ -54,6 +55,15 @@ const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
     <a class="card" href="/admin/epaper"><b>{other?.epapers ?? 0}</b>ई-पेपर</a>
   </div>
 
+  <details class="card" style="margin-bottom:1rem">
+    <summary style="cursor:pointer;font-weight:600">📲 Admin ॲप फोन / कॉम्प्युटरवर कसे इन्स्टॉल करावे?</summary>
+    <ul style="line-height:1.8;margin:.6rem 0 0;padding-left:1.2rem">
+      <li><b>Android फोन (Chrome):</b> वरचे ⋮ मेनू → “ॲप इंस्टॉल करा” / “Add to Home screen”.</li>
+      <li><b>iPhone (Safari):</b> खालचे Share बटण → “Add to Home Screen”.</li>
+      <li><b>कॉम्प्युटर (Chrome / Edge):</b> पत्त्याच्या पट्टीतील इन्स्टॉल ⊕ चिन्ह → “Install”.</li>
+    </ul>
+    <p style="margin:.5rem 0 0;color:#57534e">इन्स्टॉल केल्यावर लोगोसह आयकॉन मिळेल आणि Admin वेगळ्या ॲपसारखे उघडेल. बातम्या जतन करण्यासाठी इंटरनेट लागते.</p>
+  </details>
   <h3>मोफत मर्यादा (Usage guard)</h3>
   <div class="card">
     {meters.map(([label, val, max, text]) => {

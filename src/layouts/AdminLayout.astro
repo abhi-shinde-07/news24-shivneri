@@ -34,57 +34,102 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
 ---
 <!doctype html>
 <html lang="mr"><head>
-<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="robots" content="noindex, nofollow" /><title>{title} – NEWS24 SHIVNERI Admin</title>
 <link rel="icon" type="image/png" href="/favicon.png" />
+<link rel="manifest" href="/admin.webmanifest" />
+<meta name="theme-color" content="#1f0a0d" />
+<link rel="apple-touch-icon" href="/icons/admin-192.png" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-title" content="N24 Admin" />
 <!-- is:global so the styles also reach the admin pages and React editors rendered inside the slot -->
 <style is:global>
-  body{margin:0;font-family:system-ui,'Noto Sans Devanagari',sans-serif;background:#f4f4f5;color:#18181b;display:flex;min-height:100vh}
-  aside{width:230px;background:#18181b;color:#e4e4e7;padding:1rem;flex-shrink:0}
-  aside .brand{display:flex;gap:.6rem;align-items:center;margin:0 0 1rem;color:#fff;font-weight:700;font-size:.95rem;line-height:1.3}
-  aside .brand img{width:44px;height:44px;border-radius:6px} aside .brand small{display:block;font-weight:400;color:#a1a1aa;font-size:.8rem}
-  aside .grp{margin:1rem 0 .25rem;padding:0 .6rem;font-size:.72rem;letter-spacing:.06em;color:#a1a1aa;text-transform:uppercase} aside .ic{display:inline-block;width:1.6rem}
-  .help{background:#eff6ff;border-left:4px solid #2563eb;color:#1e3a8a;padding:.6rem .9rem;border-radius:4px;margin:0 0 1rem;font-size:.92rem;line-height:1.6}
-  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem;margin:1rem 0 1.5rem} .tile{background:#fff;border:1px solid #d4d4d8;border-radius:8px;padding:1rem;text-decoration:none;color:#18181b;display:block;transition:border-color .15s,box-shadow .15s} .tile:hover{border-color:#b3001b;box-shadow:0 2px 8px rgba(179,0,27,.12)} .tile .ti{font-size:1.7rem;display:block} .tile b{display:block;margin:.3rem 0 .15rem;font-size:1.02rem} .tile small{color:#52525b;line-height:1.45;display:block}
-  .tile.primary{background:#b3001b;color:#fff;border-color:#b3001b} .tile.primary small{color:#ffe4e6} aside a{display:block;padding:.45rem .6rem;border-radius:4px;color:inherit;text-decoration:none;font-size:.95rem}
-  aside a:hover,aside a.on{background:#3f3f46} aside .site{margin-top:.6rem;border:1px solid #3f3f46}
-  main{flex:1;padding:1.5rem;max-width:1100px;min-width:0} h2{margin-top:0} a{color:#b3001b}
-  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin:1rem 0}
-  .card{background:#fff;border:1px solid #d4d4d8;border-radius:6px;padding:1rem} .card>b{font-size:1.8rem;display:block} a.card{text-decoration:none;color:inherit}
-  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #d4d4d8} th,td{text-align:left;padding:.5rem .7rem;border-bottom:1px solid #e4e4e7;font-size:.92rem;vertical-align:middle}
-  .tablewrap{overflow-x:auto}
-  button,.button{font:inherit;padding:.5rem .9rem;border:0;border-radius:4px;background:#b3001b;color:#fff;cursor:pointer;text-decoration:none;display:inline-block} .link{background:none;color:#e4e4e7;padding:.45rem .6rem;text-align:left;width:100%}
-  .danger{background:#fff;color:#b3001b;border:1px solid #b3001b} .small{padding:.25rem .6rem;font-size:.85rem}
-  .f{margin:.7rem 0}.f label{display:block;font-size:.9rem;margin-bottom:.25rem}.f input,.f select,.f textarea{width:100%;box-sizing:border-box;padding:.5rem;border:1px solid #a1a1aa;border-radius:4px;font:inherit;background:#fff}
-  .f small{color:#52525b}
-  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.chk{display:flex;gap:.4rem;align-items:center;font-size:.95rem}
-  .toolbar{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem}.tb{background:#fff;color:#18181b;border:1px solid #a1a1aa;padding:.3rem .6rem;font-size:.85rem}.tb.act{background:#18181b;color:#fff}
-  .ProseMirror{min-height:320px;border:1px solid #a1a1aa;border-radius:4px;background:#fff;padding:.8rem 1rem;font-size:1.1rem;line-height:1.8;outline:none}.ProseMirror:focus{border-color:#b3001b}
-  .actions{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:1rem}.sec{background:#fff;color:#18181b;border:1px solid #a1a1aa}button:disabled{opacity:.5}
-  .corr{background:#fff;border-left:4px solid #b3001b;padding:.4rem .7rem;margin:.3rem 0}
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50}.modal-body{background:#fff;width:min(94vw,900px);max-height:86vh;overflow:auto;padding:1rem;border-radius:6px}
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}.thumb{border:1px solid #d4d4d8;background:#fff;padding:0;cursor:pointer;color:inherit;text-align:left;font-size:.75rem;border-radius:4px;overflow:hidden}
-  .thumb img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.thumb span{display:block;padding:.25rem .4rem}.ProseMirror img{max-width:100%}.ProseMirror figure{margin:.8rem 0}.ProseMirror figcaption{font-size:.85rem;color:#52525b}
-  .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.5rem;max-height:300px;overflow:auto;background:#fff;border:1px solid #d4d4d8;padding:.5rem;border-radius:4px}
-  .pick label{display:block;cursor:pointer;font-size:.75rem}.pick img{width:100%;aspect-ratio:4/3;object-fit:cover;border:3px solid transparent;border-radius:4px}.pick input{position:absolute;opacity:0}.pick input:checked+img{border-color:#b3001b}
-  .msg{padding:.6rem .9rem;border-radius:4px;margin:0 0 1rem}.msg.ok{background:#dcfce7;color:#14532d}.msg.err{background:#fee2e2;color:#7f1d1d}
-  .warn{background:#fef3c7;color:#78350f;padding:.6rem .9rem;border-radius:4px;margin:0 0 1rem}.warn.red{background:#fee2e2;color:#7f1d1d}
-  .badge{display:inline-block;font-size:.75rem;padding:.1rem .45rem;border-radius:9px;background:#e4e4e7}.badge.on{background:#dcfce7;color:#14532d}.badge.off{background:#fee2e2;color:#7f1d1d}
-  .meter{height:10px;background:#e4e4e7;border-radius:5px;overflow:hidden;margin:.4rem 0}.meter i{display:block;height:100%;background:#16a34a}.meter i.w{background:#d97706}.meter i.r{background:#dc2626}
-  .inline{display:inline}
-  @media(max-width:760px){body{flex-direction:column}aside{width:auto;padding:.7rem}aside .brand{margin-bottom:.5rem}aside nav{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:.3rem;padding-bottom:.3rem}aside nav a{white-space:nowrap;background:#27272a}aside .grp{display:none}aside form{margin-top:.4rem!important}main{padding:1rem}}
+  :root{--red:#c4001f;--maroon:#1f0a0d;--line:#e2ded8;--ink:#1c1917;--soft:#57534e;--bg:#f5f3ef}
+  *{box-sizing:border-box} body{margin:0;font-family:system-ui,'Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink)}
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:.7rem;background:var(--maroon);color:#fff;padding:.55rem 1rem;border-bottom:3px solid var(--red)}
+  .topbar img{width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:#fff}
+  .topbar .t{line-height:1.2;font-weight:700;font-size:1rem} .topbar .t small{display:block;font-weight:400;color:#e9c6ca;font-size:.78rem}
+  .topbar .sp{flex:1} .topbar a.site{color:#fff;font-size:.88rem;border:1px solid #6b3a40;border-radius:6px;padding:.3rem .7rem;text-decoration:none}
+  .topbar form button{background:transparent;border:1px solid #6b3a40;color:#fff;padding:.3rem .7rem;font-size:.88rem;border-radius:6px}
+  .layout{display:flex;min-height:calc(100vh - 60px)}
+  aside{width:240px;background:#fff;border-right:1px solid var(--line);padding:.8rem;flex-shrink:0}
+  aside .grp{margin:1rem 0 .3rem;padding:0 .6rem;font-size:.75rem;color:#a8a29e;font-weight:600}
+  aside a{display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;border-radius:8px;color:var(--ink);text-decoration:none;font-size:.95rem}
+  aside a:hover{background:#f5f0ee} aside a.on{background:#fde8eb;color:var(--red);font-weight:600} aside .ic{width:1.4rem;text-align:center}
+  aside .close{display:none} aside .mobile-extra{display:none}
+  main{flex:1;padding:1.4rem 1.6rem 2rem;max-width:1100px;min-width:0} h2{margin-top:0;font-size:1.4rem} a{color:var(--red)}
+  .help{background:#eef4ff;border:1px solid #c9dafb;color:#1e3a8a;padding:.65rem .9rem;border-radius:10px;margin:0 0 1rem;font-size:.92rem;line-height:1.6}
+  .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem;margin:1rem 0 1.5rem}
+  .tile{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem;text-decoration:none;color:var(--ink);display:block;transition:border-color .15s,box-shadow .15s}
+  .tile:hover{border-color:var(--red);box-shadow:0 4px 14px rgba(196,0,31,.12)} .tile .ti{font-size:1.7rem;display:block} .tile b{display:block;margin:.35rem 0 .15rem;font-size:1.02rem} .tile small{color:var(--soft);line-height:1.45;display:block}
+  .tile.primary{background:var(--red);color:#fff;border-color:var(--red)} .tile.primary small{color:#ffe4e6}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem;margin:1rem 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:1rem} .card>b{font-size:1.8rem;display:block;color:var(--red)} a.card{text-decoration:none;color:inherit}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line)} th{background:#faf8f5;font-weight:600;color:var(--soft)} th,td{text-align:left;padding:.6rem .75rem;border-bottom:1px solid #eee9e3;font-size:.92rem;vertical-align:middle}
+  .tablewrap{overflow-x:auto;border-radius:12px}
+  button,.button{font:inherit;padding:.55rem 1rem;border:0;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
+  .danger{background:#fff;color:var(--red);border:1px solid var(--red)} .small{padding:.3rem .65rem;font-size:.85rem}
+  .f{margin:.75rem 0}.f label{display:block;font-size:.9rem;margin-bottom:.3rem;font-weight:600;color:#44403c}.f input,.f select,.f textarea{width:100%;padding:.6rem .7rem;border:1px solid #cfc9c1;border-radius:8px;font:inherit;background:#fff}
+  .f input:focus,.f select:focus,.f textarea:focus{outline:2px solid #f3a3b0;border-color:var(--red)} .f small{color:var(--soft)}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.chk{display:flex;gap:.45rem;align-items:center;font-size:.95rem}
+  .toolbar{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem}.tb{background:#fff;color:var(--ink);border:1px solid #cfc9c1;padding:.35rem .65rem;font-size:.85rem}.tb.act{background:var(--maroon);color:#fff}
+  .ProseMirror{min-height:320px;border:1px solid #cfc9c1;border-radius:8px;background:#fff;padding:.8rem 1rem;font-size:1.1rem;line-height:1.8;outline:none}.ProseMirror:focus{border-color:var(--red)}
+  .actions{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;margin-top:1rem}.sec{background:#fff;color:var(--ink);border:1px solid #cfc9c1}button:disabled{opacity:.5}
+  .corr{background:#fff;border-left:4px solid var(--red);padding:.4rem .7rem;margin:.3rem 0}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.5);display:grid;place-items:center;z-index:50}.modal-body{background:#fff;width:min(94vw,900px);max-height:86vh;overflow:auto;padding:1rem;border-radius:12px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:.6rem}.thumb{border:1px solid var(--line);background:#fff;padding:0;cursor:pointer;color:inherit;text-align:left;font-size:.75rem;border-radius:8px;overflow:hidden}
+  .thumb img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}.thumb span{display:block;padding:.25rem .4rem}.ProseMirror img{max-width:100%}.ProseMirror figure{margin:.8rem 0}.ProseMirror figcaption{font-size:.85rem;color:var(--soft)}
+  .pick{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:.5rem;max-height:300px;overflow:auto;background:#fff;border:1px solid var(--line);padding:.5rem;border-radius:8px}
+  .pick label{display:block;cursor:pointer;font-size:.75rem}.pick img{width:100%;aspect-ratio:4/3;object-fit:cover;border:3px solid transparent;border-radius:6px}.pick input{position:absolute;opacity:0}.pick input:checked+img{border-color:var(--red)}
+  .msg{padding:.65rem .9rem;border-radius:10px;margin:0 0 1rem}.msg.ok{background:#dcfce7;color:#14532d}.msg.err{background:#fee2e2;color:#7f1d1d}
+  .warn{background:#fef3c7;color:#78350f;padding:.65rem .9rem;border-radius:10px;margin:0 0 1rem}.warn.red{background:#fee2e2;color:#7f1d1d}
+  .badge{display:inline-block;font-size:.75rem;padding:.12rem .5rem;border-radius:9px;background:#eee9e3}.badge.on{background:#dcfce7;color:#14532d}.badge.off{background:#fee2e2;color:#7f1d1d}
+  .meter{height:10px;background:#eee9e3;border-radius:5px;overflow:hidden;margin:.4rem 0}.meter i{display:block;height:100%;background:#16a34a}.meter i.w{background:#d97706}.meter i.r{background:#dc2626}
+  .inline{display:inline} #install-app{display:none;margin:0 0 1rem}
+  .tabbar{display:none}
+  @media(max-width:760px){
+    .topbar{padding:.5rem .7rem}.topbar img{width:34px;height:34px}.topbar a.site,.topbar form{display:none}
+    .layout{display:block}
+    aside{display:none;position:fixed;inset:0;z-index:40;width:auto;border:0;overflow-y:auto;padding:1rem 1rem 5rem}
+    aside:target{display:block} aside .close{display:block;text-align:right;margin-bottom:.3rem;justify-content:flex-end}
+    aside .mobile-extra{display:block}
+    main{padding:1rem .8rem 6rem}
+    h2{font-size:1.2rem}
+    .tiles{grid-template-columns:1fr 1fr;gap:.6rem}.tile{padding:.8rem}.tile small{display:none}
+    .cards{grid-template-columns:repeat(3,1fr);gap:.5rem}.card{padding:.6rem;font-size:.8rem;text-align:center}.card>b{font-size:1.3rem}
+    .tablewrap table,.tablewrap thead,.tablewrap tbody,.tablewrap tr,.tablewrap td{display:block;width:100%}
+    .tablewrap table{border:0;background:transparent}.tablewrap thead{display:none}
+    .tablewrap tr{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:.6rem;padding:.5rem .3rem}
+    .tablewrap td{border:0;padding:.25rem .5rem}
+    .tablewrap td[style*="nowrap"]{white-space:normal!important;display:flex;flex-wrap:wrap;gap:.4rem;align-items:center}
+    .tabbar{display:grid;grid-template-columns:repeat(4,1fr);position:fixed;left:0;right:0;bottom:0;z-index:35;background:#fff;border-top:1px solid var(--line);padding:.35rem 0 calc(.35rem + env(safe-area-inset-bottom))}
+    .tabbar a{display:flex;flex-direction:column;align-items:center;font-size:.75rem;color:var(--soft);text-decoration:none;gap:.1rem}
+    .tabbar a span{font-size:1.25rem}.tabbar a.on{color:var(--red);font-weight:600}
+  }
 </style></head>
 <body data-usage={usage.pct.toFixed(1)}>
-<aside>
-  <div class="brand"><img src="/apple-touch-icon.png" alt="" /><span>न्यूज २४ शिवनेरी<small>व्यवस्थापन (Admin)</small></span></div>
+<header class="topbar">
+  <img src="/icons/admin-192.png" alt="" />
+  <div class="t">न्यूज २४ शिवनेरी<small>व्यवस्थापन (Admin)</small></div>
+  <span class="sp"></span>
+  <a class="site" href="/" target="_blank" rel="noopener">↗ वेबसाइट पहा</a>
+  <form method="post" action="/admin/logout"><button type="submit">⏻ बाहेर पडा</button></form>
+</header>
+<div class="layout">
+<aside id="menu">
+  <a class="close" href="#">✕ बंद करा</a>
   <nav>
     {menu.map(([group, items]) => <>
       {group && <p class="grp">{group}</p>}
       {items.map(([icon, t, h]) => <a class={isOn(h) ? 'on' : ''} href={h}><span class="ic" aria-hidden="true">{icon}</span>{t}</a>)}
     </>)}
-    <a class="site" href="/" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">↗</span>वेबसाइट पहा</a>
+    <div class="mobile-extra">
+      <p class="grp">इतर</p>
+      <a href="/" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">↗</span>वेबसाइट पहा</a>
+      <form method="post" action="/admin/logout"><button class="sec" type="submit" style="width:100%;margin-top:.4rem">⏻ बाहेर पडा ({user?.name})</button></form>
+    </div>
   </nav>
-  <form method="post" action="/admin/logout" style="margin-top:1rem"><button class="link" type="submit">⏻ बाहेर पडा ({user?.name})</button></form>
 </aside>
 <main>
   {usage.pct >= 80 && <p class="warn red" role="alert"><b>सावधान:</b> मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. पुढील अपलोड/बदल केल्यास Cloudflare चे सशुल्क वापर सुरू होऊ शकते. <a href="/admin">तपशील</a></p>}
@@ -94,6 +139,13 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
   {help && <p class="help"><b>ℹ️ कसे वापरावे:</b> {help}</p>}
   <slot />
 </main>
+</div>
+<nav class="tabbar" aria-label="मुख्य">
+  <a class={path === '/admin' ? 'on' : ''} href="/admin"><span aria-hidden="true">🏠</span>मुख्य</a>
+  <a class={path === '/admin/articles/new' ? 'on' : ''} href="/admin/articles/new"><span aria-hidden="true">✍️</span>लिहा</a>
+  <a class={path.startsWith('/admin/articles') && path !== '/admin/articles/new' ? 'on' : ''} href="/admin/articles"><span aria-hidden="true">📰</span>बातम्या</a>
+  <a href="#menu"><span aria-hidden="true">☰</span>अधिक</a>
+</nav>
 <script is:inline>
   // Above 80% of a free limit, every upload or save asks for confirmation first.
   (function () {
@@ -109,6 +161,15 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
       return f.apply(this, arguments);
     };
   })();
+  // Installable app: register the admin service worker and offer an install button where supported.
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin' }).catch(function () {});
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    var b = document.getElementById('install-app');
+    if (!b) return;
+    b.style.display = 'inline-block';
+    b.onclick = function () { e.prompt(); b.style.display = 'none'; };
+  });
   // Confirm before destructive buttons.
   document.addEventListener('click', function (e) {
     var b = e.target.closest('[data-confirm]');
