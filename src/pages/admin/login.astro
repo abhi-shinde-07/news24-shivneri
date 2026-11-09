@@ -31,18 +31,21 @@ if (Astro.request.method === 'POST') {
 <html lang="mr"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" /><title>Admin Login – NEWS24 SHIVNERI</title>
 <link rel="icon" type="image/png" href="/favicon.png" />
-<link rel="manifest" href="/admin.webmanifest" /><meta name="theme-color" content="#1f0a0d" />
+<link rel="manifest" href="/admin.webmanifest" /><meta name="theme-color" content="#c4001f" />
 <link rel="apple-touch-icon" href="/icons/admin-192.png" /><meta name="apple-mobile-web-app-capable" content="yes" /><meta name="apple-mobile-web-app-title" content="N24 Admin" />
 <style>
   .brand{text-align:center;margin:0 0 1rem;padding-bottom:.9rem;border-bottom:1px solid #e4e4e7}
   .brand img{height:110px;width:110px;margin:0 auto;display:block;border-radius:50%}
   .brand p{margin:.4rem 0 0;color:#c4001f;font-weight:700}
-  body{margin:0;min-height:100vh;display:grid;place-items:center;background:#1f0a0d;font-family:system-ui,'Noto Sans Devanagari',sans-serif}
-  form{background:#fff;border-top:4px solid #c4001f;border-radius:16px;padding:1.6rem;width:min(92vw,360px);box-shadow:0 10px 30px rgba(0,0,0,.35)}
+  body{margin:0;min-height:100vh;display:grid;place-items:center;background-color:#a8001c;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 12px,transparent 12px 24px);font-family:system-ui,'Noto Sans Devanagari',sans-serif}
+  form{box-sizing:border-box;background:#fff;border-top:4px solid #c4001f;border-radius:16px;padding:1.6rem;width:min(94vw,380px);margin:1rem 0;box-shadow:0 10px 30px rgba(0,0,0,.35)}
   h1{font-size:1.15rem;margin:0 0 1rem} label{display:block;font-size:.9rem;margin:.7rem 0 .25rem}
   input{width:100%;box-sizing:border-box;padding:.55rem;border:1px solid #cfc9c1;border-radius:8px;font:inherit;padding:.65rem}
   button{margin-top:1rem;width:100%;padding:.6rem;border:0;border-radius:8px;background:#c4001f;padding:.75rem;font-weight:600;color:#fff;font:inherit;cursor:pointer}
   .err{color:#b3001b;font-size:.9rem;margin:.7rem 0 0}
+  .app{margin-top:1.1rem;padding-top:.8rem;border-top:1px solid #eee9e3;font-size:.88rem;color:#57534e}
+  .app .install{background:#1f0a0d;margin-top:0} .app details{margin-top:.6rem} .app summary{cursor:pointer;font-weight:600;color:#1c1917}
+  .app p{line-height:1.7;margin:.4rem 0 0} .inapp{background:#fef3c7;color:#78350f;padding:.5rem .7rem;border-radius:8px}
 </style></head>
 <body>
 <form method="post">
@@ -56,5 +59,35 @@ if (Astro.request.method === 'POST') {
   <label for="code">२-पायरी कोड <small>(चालू केला असल्यासच)</small></label><input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="7" />
   {error && <p class="err" role="alert">{error}</p>}
   <button type="submit">लॉगिन</button>
+  <div class="app">
+    <p class="inapp" id="inapp" hidden>⚠️ हे पान WhatsApp / इतर ॲपमध्ये उघडले आहे. ॲप इन्स्टॉल करण्यासाठी ⋮ मेनू → <b>“Chrome मध्ये उघडा”</b> निवडा.</p>
+    <button type="button" class="install" id="install-app">📲 Admin ॲप इन्स्टॉल करा</button>
+    <details id="install-help">
+      <summary>📲 फोनवर ॲप कसे इन्स्टॉल करावे?</summary>
+      <p><b>Android (Chrome):</b> वरचे ⋮ मेनू → “ॲप इंस्टॉल करा” किंवा “होम स्क्रीनवर जोडा”.<br />
+      <b>iPhone (Safari):</b> खालचे Share बटण → “Add to Home Screen”.<br />
+      <b>कॉम्प्युटर:</b> पत्त्याच्या पट्टीतील ⊕ चिन्ह → Install.</p>
+    </details>
+  </div>
 </form>
+<script is:inline>
+  // Set up the installable admin app from the first page users see.
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin' }).catch(function () {});
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__n24Install = e; });
+  window.addEventListener('appinstalled', function () { var b = document.getElementById('install-app'); if (b) b.hidden = true; });
+  document.addEventListener('DOMContentLoaded', function () {
+    var b = document.getElementById('install-app');
+    if (!b) return;
+    // Already running as the installed app: nothing to install.
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) { b.hidden = true; return; }
+    b.hidden = false; b.style.display = 'inline-block';
+    b.onclick = function () {
+      if (window.__n24Install) { window.__n24Install.prompt(); window.__n24Install = null; return; }
+      // Chrome has not offered the popup yet: show the menu steps instead.
+      var d = document.getElementById('install-help'); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    };
+  });
+  // In-app browsers (WhatsApp, Instagram, Facebook, YouTube) cannot install apps.
+  if (/FBAN|FBAV|Instagram|WhatsApp|Line\/|; wv\)/i.test(navigator.userAgent)) document.getElementById('inapp').hidden = false;
+</script>
 </body></html>

@@ -38,7 +38,7 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
 <meta name="robots" content="noindex, nofollow" /><title>{title} – NEWS24 SHIVNERI Admin</title>
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="manifest" href="/admin.webmanifest" />
-<meta name="theme-color" content="#1f0a0d" />
+<meta name="theme-color" content="#c4001f" />
 <link rel="apple-touch-icon" href="/icons/admin-192.png" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="mobile-web-app-capable" content="yes" />
@@ -47,7 +47,7 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
 <style is:global>
   :root{--red:#c4001f;--maroon:#1f0a0d;--line:#e2ded8;--ink:#1c1917;--soft:#57534e;--bg:#f5f3ef}
   *{box-sizing:border-box} body{margin:0;font-family:system-ui,'Noto Sans Devanagari',sans-serif;background:var(--bg);color:var(--ink)}
-  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:.7rem;background:var(--maroon);color:#fff;padding:.55rem 1rem;border-bottom:3px solid var(--red)}
+  .topbar{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:.7rem;background-color:#a8001c;background-image:repeating-linear-gradient(135deg,rgba(255,255,255,.05) 0 12px,transparent 12px 24px);color:#fff;padding:.55rem 1rem;border-bottom:3px solid #ffcf3f}
   .topbar img{width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:#fff}
   .topbar .t{line-height:1.2;font-weight:700;font-size:1rem} .topbar .t small{display:block;font-weight:400;color:#e9c6ca;font-size:.78rem}
   .topbar .sp{flex:1} .topbar a.site{color:#fff;font-size:.88rem;border:1px solid #6b3a40;border-radius:6px;padding:.3rem .7rem;text-decoration:none}
@@ -163,12 +163,19 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
   })();
   // Installable app: register the admin service worker and offer an install button where supported.
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin' }).catch(function () {});
-  window.addEventListener('beforeinstallprompt', function (e) {
-    e.preventDefault();
+  window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__n24Install = e; });
+  window.addEventListener('appinstalled', function () { var b = document.getElementById('install-app'); if (b) b.hidden = true; });
+  document.addEventListener('DOMContentLoaded', function () {
     var b = document.getElementById('install-app');
     if (!b) return;
-    b.style.display = 'inline-block';
-    b.onclick = function () { e.prompt(); b.style.display = 'none'; };
+    // Already running as the installed app: nothing to install.
+    if (window.matchMedia('(display-mode: standalone)').matches || navigator.standalone) { b.hidden = true; return; }
+    b.hidden = false; b.style.display = 'inline-block';
+    b.onclick = function () {
+      if (window.__n24Install) { window.__n24Install.prompt(); window.__n24Install = null; return; }
+      // Chrome has not offered the popup yet: show the menu steps instead.
+      var d = document.getElementById('install-help'); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    };
   });
   // Confirm before destructive buttons.
   document.addEventListener('click', function (e) {

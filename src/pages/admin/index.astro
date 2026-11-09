@@ -55,10 +55,10 @@ const cls = (p: number) => (p >= 80 ? 'r' : p >= 70 ? 'w' : '');
     <a class="card" href="/admin/epaper"><b>{other?.epapers ?? 0}</b>ई-पेपर</a>
   </div>
 
-  <details class="card" style="margin-bottom:1rem">
+  <details class="card" id="install-help" style="margin-bottom:1rem">
     <summary style="cursor:pointer;font-weight:600">📲 Admin ॲप फोन / कॉम्प्युटरवर कसे इन्स्टॉल करावे?</summary>
     <ul style="line-height:1.8;margin:.6rem 0 0;padding-left:1.2rem">
-      <li><b>Android फोन (Chrome):</b> वरचे ⋮ मेनू → “ॲप इंस्टॉल करा” / “Add to Home screen”.</li>
+      <li><b>Android फोन (Chrome):</b> उजवीकडे वरचे <b>⋮</b> (तीन ठिपके) → <b>“ॲप इंस्टॉल करा”</b> (Install app) → <b>इन्स्टॉल करा</b>. हा पर्याय नसल्यास “होम स्क्रीनवर जोडा” (Add to Home screen).</li>
       <li><b>iPhone (Safari):</b> खालचे Share बटण → “Add to Home Screen”.</li>
       <li><b>कॉम्प्युटर (Chrome / Edge):</b> पत्त्याच्या पट्टीतील इन्स्टॉल ⊕ चिन्ह → “Install”.</li>
     </ul>
