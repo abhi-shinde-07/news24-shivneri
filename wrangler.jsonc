@@ -31,6 +31,12 @@
 			"binding": "MEDIA",
 			"bucket_name": "news24-media",
 			"remote": false
+		},
+		{
+			// Private: never connect a public domain to this bucket (backups include password hashes).
+			"binding": "BACKUPS",
+			"bucket_name": "news24-backups",
+			"remote": false
 		}
 	],
 	"kv_namespaces": [
