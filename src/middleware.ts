@@ -39,6 +39,9 @@ function secure(res: Response, url: URL, admin: boolean) {
 }
 
 export const onRequest = defineMiddleware(async (ctx, next) => {
+  // One address for readers and Google: news24shivneri.in -> www.news24shivneri.in
+  if (ctx.url.hostname === 'news24shivneri.in' || (ctx.url.hostname.endsWith('news24shivneri.in') && ctx.url.protocol === 'http:'))
+    return Response.redirect(`https://www.news24shivneri.in${ctx.url.pathname}${ctx.url.search}`, 301);
   const path = ctx.url.pathname;
   const isApi = path.startsWith('/api/admin');
   if (!path.startsWith('/admin') && !isApi) return secure(await next(), ctx.url, false);

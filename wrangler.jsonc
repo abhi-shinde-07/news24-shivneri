@@ -9,6 +9,11 @@
 		"binding": "ASSETS"
 	},
 	// Nightly backup of the text tables to R2 at 02:30 IST (21:00 UTC). Free: cron triggers cost nothing.
+	// The site's own domain (zone must be active on Cloudflare). Cloudflare creates the DNS records and HTTPS certificates.
+	"routes": [
+		{ "pattern": "www.news24shivneri.in", "custom_domain": true },
+		{ "pattern": "news24shivneri.in", "custom_domain": true }
+	],
 	"triggers": {
 		"crons": ["0 21 * * *"]
 	},
