@@ -29,9 +29,11 @@ const LIVE = `a.status = 'published' AND a.published_at <= strftime('%Y-%m-%dT%H
 export const getNavCategories = async (db: D1) =>
   (await db.prepare('SELECT id, slug, name_mr FROM categories WHERE is_active = 1 ORDER BY sort_order, id').all<Category>()).results;
 
+// Home page items carry their text so readers can read the top news without opening it.
+export type HomeItem = ArticleItem & { body_html: string };
 export async function getHome(db: D1) {
   const { results } = await db.prepare(
-    `SELECT ${LIST} ${FROM} WHERE ${LIVE} ORDER BY a.published_at DESC LIMIT 27`).all<ArticleItem>();
+    `SELECT ${LIST}, a.body_html ${FROM} WHERE ${LIVE} ORDER BY a.published_at DESC LIMIT 27`).all<HomeItem>();
   const leadIdx = Math.max(0, results.findIndex((a) => a.is_featured));
   const lead = results[leadIdx] ?? null;
   const rest = results.filter((_, i) => i !== leadIdx);
@@ -101,6 +103,16 @@ export const getFeaturedVideos = async (db: D1, n = 4) =>
   (await db.prepare(
     `SELECT id, youtube_id, title, description, is_featured, published_at FROM videos WHERE status = 'published'
      ORDER BY is_featured DESC, published_at DESC LIMIT ?`).bind(n).all<Video>()).results;
+
+// Home video row: YouTube videos plus news articles that carry a YouTube link, newest first.
+export type VideoItem = { href: string; youtube_id: string; title: string; published_at: string };
+export const getHomeVideos = async (db: D1, n = 4) =>
+  (await db.prepare(
+    `SELECT * FROM (
+       SELECT '/videos/' || id AS href, youtube_id, title, published_at FROM videos WHERE status = 'published'
+       UNION ALL
+       SELECT '/news/' || a.id, a.youtube_id, a.headline, a.published_at FROM articles a WHERE ${LIVE} AND a.youtube_id IS NOT NULL AND a.youtube_id <> ''
+     ) ORDER BY published_at DESC LIMIT ?`).bind(n).all<VideoItem>()).results;
 
 export const getLatestEpaper = (db: D1) =>
   db.prepare(`SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size FROM epapers WHERE status = 'published'

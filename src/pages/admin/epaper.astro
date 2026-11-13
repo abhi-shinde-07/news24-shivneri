@@ -9,10 +9,10 @@ import { getUsage, R2_LIMIT } from '../../lib/usage';
 import { back, readForm } from '../../lib/admin';
 import { nowIso } from '../../lib/articles';
 const db = getDB(Astro.locals);
-type E = { id: number; edition_date: string; title: string; edition_name: string; pdf_key: string; cover_key: string | null; size: number; status: string };
+type E = { id: number; edition_date: string; title: string; edition_name: string; pdf_key: string; cover_key: string | null; size: number; status: string; built: number };
 async function remove(e: Pick<E, 'id' | 'pdf_key' | 'cover_key'>) {
   const bucket = getBucket(Astro.locals);
-  await bucket.delete(e.pdf_key);
+  if (e.pdf_key) await bucket.delete(e.pdf_key);
   if (e.cover_key) await bucket.delete(e.cover_key);
   await db.prepare('DELETE FROM epapers WHERE id = ?').bind(e.id).first();
 }
@@ -40,7 +40,7 @@ if (Astro.request.method === 'POST') {
   }
 }
 const s = await getSettings(db);
-const list = (await db.prepare('SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size, status FROM epapers ORDER BY edition_date DESC LIMIT 400').all<E>()).results;
+const list = (await db.prepare('SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size, status, (layout IS NOT NULL) AS built FROM epapers ORDER BY edition_date DESC LIMIT 400').all<E>()).results;
 const total = list.reduce((n, e) => n + e.size, 0);
 const u = await getUsage(db);
 const oldCount = (await db.prepare(`SELECT COUNT(*) AS n FROM epapers WHERE edition_date < date('now', ?)`).bind(`-${Number(s.epaper_retention_months) || 12} months`).first<{ n: number }>())?.n ?? 0;
@@ -48,9 +48,14 @@ const pct = (u.r2 / R2_LIMIT) * 100;
 ---
 <AdminLayout title="ई-पेपर व्यवस्थापन">
   <h2>ई-पेपर व्यवस्थापन</h2>
+  <div class="card" style="margin-bottom:1rem;border-left:4px solid var(--red)">
+    <h3 style="margin-top:0">📰 बातम्यांमधून ई-पेपर बनवा (PDF लागत नाही)</h3>
+    <p style="margin:.3rem 0 .7rem">बातम्या निवडा → आपोआप वृत्तपत्रासारखे पान तयार होते → जागा/आकार बदला, मजकूर थेट बदला → प्रिव्ह्यू पहा → प्रकाशित करा.</p>
+    <a class="button" href="/admin/epaper/build">+ नवीन ई-पेपर बनवा</a>
+  </div>
   <div class="row">
     <form id="upload" class="card">
-      <h3 style="margin-top:0">नवीन आवृत्ती अपलोड करा</h3>
+      <h3 style="margin-top:0">किंवा तयार PDF अपलोड करा</h3>
       <div class="row">
         <div class="f"><label for="d">तारीख</label><input id="d" name="edition_date" type="date" required value={new Date().toISOString().slice(0, 10)} /></div>
         <div class="f"><label for="en">आवृत्तीचे नाव</label><input id="en" name="edition_name" value={s.edition} maxlength="100" /></div>
@@ -80,12 +85,12 @@ const pct = (u.r2 / R2_LIMIT) * 100;
       <td>{e.cover_key && <img src={`/files/${e.cover_key}`} alt="" width="50" loading="lazy" />}</td>
       <td>{fmtDay(e.edition_date)}</td><td>{e.title}<br /><small>{e.edition_name}</small></td><td>{fmtSize(e.size)}</td>
       <td><span class={`badge ${e.status === 'published' ? 'on' : ''}`}>{e.status === 'published' ? 'प्रकाशित' : 'ड्राफ्ट'}</span></td>
-      <td style="white-space:nowrap"><a class="small" href={`/files/${e.pdf_key}`} target="_blank">PDF</a>
+      <td style="white-space:nowrap">{e.built ? <a class="small" href={`/admin/epaper/build?id=${e.id}`}>✏️ संपादित</a> : <a class="small" href={`/files/${e.pdf_key}`} target="_blank">PDF</a>}
         {e.status === 'published' && <a class="small" href={`/epaper/${e.edition_date}`} target="_blank">पहा</a>}
         <form method="post" class="inline"><input type="hidden" name="id" value={e.id} /><input type="hidden" name="action" value="status" />
           <button class="sec small" type="submit">{e.status === 'published' ? 'ड्राफ्ट करा' : 'प्रकाशित करा'}</button></form>
         <form method="post" class="inline"><input type="hidden" name="id" value={e.id} /><input type="hidden" name="action" value="delete" />
-          <button class="danger small" type="submit" data-confirm="हा ई-पेपर व PDF कायमची हटवायची?">हटवा</button></form></td>
+          <button class="danger small" type="submit" data-confirm="हा ई-पेपर कायमचा हटवायचा?">हटवा</button></form></td>
     </tr>)}
   </tbody></table></div>
 </AdminLayout>

@@ -1,0 +1,30 @@
+/* E-paper pages built in the admin. Used by the admin builder, the public reader and the single-news clip. */
+.ep-page { background: #fffdf7; color: #111; width: 100%; max-width: 900px; margin: 0 auto 1.5rem; padding: 18px 20px 24px; box-sizing: border-box;
+  box-shadow: 0 2px 14px rgba(0,0,0,.18); font-family: 'Mukta', 'Noto Sans Devanagari', sans-serif; }
+.ep-mast { position: static; background: none; border-radius: 0; box-shadow: none; border-top: 0; border-left: 0; border-right: 0; display: flex; align-items: center; gap: 12px; border-bottom: 4px double #111; padding-bottom: 8px; margin-bottom: 10px; }
+.ep-mast img { width: 58px; height: auto; }
+.ep-mast .ep-name { flex: 1; font-family: 'Noto Serif Devanagari', serif; font-weight: 800; font-size: 34px; line-height: 1.1; color: #c4001f; }
+.ep-mast .ep-name small { display: block; font-size: 13px; color: #333; font-weight: 700; }
+.ep-mast .ep-info { text-align: right; font-size: 12px; line-height: 1.5; color: #333; }
+.ep-mast.mini .ep-name { font-size: 22px; }
+.ep-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); grid-auto-flow: row dense; gap: 0; }
+.ep-item { padding: 8px 10px 10px; border-right: 1px solid #bbb; border-bottom: 1px solid #bbb; min-width: 0; position: relative; }
+.ep-item.s1 { grid-column: span 1; } .ep-item.s2 { grid-column: span 2; } .ep-item.s3 { grid-column: span 3; } .ep-item.s4 { grid-column: span 4; }
+.ep-item h3 { font-family: 'Noto Serif Devanagari', serif; font-weight: 800; margin: 0 0 6px; line-height: 1.3; font-size: 17px; }
+.ep-item.s2 h3 { font-size: 22px; } .ep-item.s3 h3 { font-size: 27px; } .ep-item.s4 h3 { font-size: 32px; color: #8a0016; }
+.ep-item img { width: 100%; height: auto; max-height: 360px; object-fit: cover; display: block; margin: 0 0 6px; }
+.ep-item .ep-loc { font-weight: 700; color: #c4001f; }
+.ep-body { font-size: 13.5px; line-height: 1.6; text-align: justify; hyphens: auto; }
+.ep-body p { margin: 0 0 6px; }
+.ep-item.s2 .ep-body { columns: 2; column-gap: 14px; } .ep-item.s3 .ep-body, .ep-item.s4 .ep-body { columns: 3; column-gap: 14px; }
+.ep-foot { margin-top: 10px; border-top: 1px solid #111; padding-top: 4px; font-size: 11px; display: flex; justify-content: space-between; color: #444; }
+a.ep-item { color: inherit; text-decoration: none; display: block; }
+a.ep-item:hover { background: #fff3c4; outline: 2px solid #c4001f; outline-offset: -2px; z-index: 1; }
+@media (max-width: 640px) {
+  .ep-page { padding: 10px; }
+  .ep-mast .ep-name { font-size: 22px; } .ep-mast img { width: 40px; }
+  .ep-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ep-item.s3, .ep-item.s4 { grid-column: span 2; } .ep-item.s2 .ep-body { columns: 1; }
+  .ep-item.s3 .ep-body, .ep-item.s4 .ep-body { columns: 1; }
+  .ep-item.s2 h3 { font-size: 18px; } .ep-item.s3 h3, .ep-item.s4 h3 { font-size: 22px; }
+}

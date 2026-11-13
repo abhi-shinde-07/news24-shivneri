@@ -1,5 +1,10 @@
 // Small progressive enhancements only; every page works without this file.
 (function () {
+  // Visitor counter in the footer: every page view adds one.
+  var vc = document.getElementById('visits');
+  if (vc) fetch('/api/visit', { method: 'POST' }).then(function (r) { return r.json(); }).then(function (d) {
+    vc.textContent = Number(d.visits).toLocaleString('mr-IN'); vc.parentNode.hidden = false;
+  }).catch(function () {});
   var t = document.getElementById('today');
   if (t) t.textContent = new Date().toLocaleDateString('mr-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   document.querySelectorAll('[data-copy]').forEach(function (b) {

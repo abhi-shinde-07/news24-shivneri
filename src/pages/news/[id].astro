@@ -44,17 +44,17 @@ const share = encodeURIComponent(`${a.headline}\n${url}`);
       <a class="wa" href={`https://wa.me/?text=${share}`} target="_blank" rel="noopener">WhatsApp वर शेअर करा</a>
       <button type="button" data-copy={url} hidden>लिंक कॉपी करा</button>
     </div>
-    {a.youtube_id && (
-      <div class="player">
-        <button type="button" data-yt={a.youtube_id} aria-label={`व्हिडिओ चालू करा: ${a.headline}`}>
-          <img src={`https://i.ytimg.com/vi/${a.youtube_id}/hqdefault.jpg`} alt="" width="480" height="360" /><span class="play" aria-hidden="true">▶</span>
-        </button>
-      </div>)}
     {a.main_image_key && <img class="lead-img" src={mediaUrl(a.main_image_key)} alt={a.main_image_caption ?? a.headline} width="1200" height="675" fetchpriority="high" />}
     {(a.main_image_caption || a.image_credit) && <p class="caption">{a.main_image_caption}{a.image_credit && <> · श्रेय: {a.image_credit}</>}</p>}
     <AdSlot position="in_between" />
     <!-- body_html is sanitized when saved (Phase 5) -->
     <div class="body" set:html={rewriteBody(a.body_html)} />
+    {a.youtube_id && (
+      <section class="art-video" aria-label="व्हिडिओ"><h2 class="section-head">या बातमीचा व्हिडिओ</h2><div class="player">
+        <button type="button" data-yt={a.youtube_id} aria-label={`व्हिडिओ चालू करा: ${a.headline}`}>
+          <img src={`https://i.ytimg.com/vi/${a.youtube_id}/hqdefault.jpg`} alt="" width="480" height="360" /><span class="play" aria-hidden="true">▶</span>
+        </button>
+      </div></section>)}
     {corrections.length > 0 && (
       <section aria-label="सुधारणा">
         {corrections.map((c) => <div class="correction"><b>सुधारणा</b> ({fmtDate(c.created_at)}): {c.note}</div>)}

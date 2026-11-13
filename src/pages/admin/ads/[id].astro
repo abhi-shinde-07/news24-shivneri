@@ -53,11 +53,41 @@ const media = (await db.prepare('SELECT key, filename FROM media ORDER BY id DES
       <div class="f"><label for="end_date">शेवट</label><input id="end_date" name="end_date" type="date" value={ad.end_date} required /></div>
       <div class="f"><label for="status">स्थिती</label><select id="status" name="status"><option value="active" selected={ad.status === 'active'}>चालू</option><option value="inactive" selected={ad.status === 'inactive'}>बंद</option></select></div>
     </div>
-    <div class="f"><label>प्रतिमा (Media Library मधून निवडा; नवीन प्रतिमा आधी <a href="/admin/media" target="_blank">Media Library</a> मध्ये अपलोड करा)</label>
-      {media.length === 0 ? <p>Media Library रिकामी आहे.</p> : (
-      <div class="pick">{media.map((m) => <label><input type="radio" name="image_key" value={m.key} checked={ad!.image_key === m.key} required />
-        <img src={mediaUrl(m.key)} alt="" loading="lazy" />{(m.filename ?? '').slice(0, 18)}</label>)}</div>)}
+    <div class="f"><label>जाहिरातीचा फोटो</label>
+      <p style="margin:.2rem 0 .6rem"><label class="button" style="display:inline-block;cursor:pointer">📷 फोटो अपलोड करा<input id="adup" type="file" accept="image/*" hidden /></label>
+        <span id="adupmsg" role="status" style="margin-left:.5rem"></span></p>
+      <small>किंवा आधी अपलोड केलेला फोटो खाली निवडा:</small>
+      <div class="pick" id="adpick">{media.map((m) => <label><input type="radio" name="image_key" value={m.key} checked={ad!.image_key === m.key} required />
+        <img src={mediaUrl(m.key)} alt="" loading="lazy" />{(m.filename ?? '').slice(0, 18)}</label>)}</div>
     </div>
     <div class="actions"><button type="submit">जतन करा</button><a href="/admin/ads">रद्द करा</a></div>
   </form>
 </AdminLayout>
+<script is:inline>
+  // Upload the ad photo right here (shrunk in the browser), then select it.
+  (function () {
+    var inp = document.getElementById('adup'), msg = document.getElementById('adupmsg'), pick = document.getElementById('adpick');
+    async function shrink(f) {
+      try {
+        var b = await createImageBitmap(f), k = Math.min(1, 1600 / Math.max(b.width, b.height)), c = document.createElement('canvas');
+        c.width = Math.round(b.width * k); c.height = Math.round(b.height * k); c.getContext('2d').drawImage(b, 0, 0, c.width, c.height);
+        var out = await new Promise(function (r) { c.toBlob(r, 'image/webp', 0.85); });
+        if (out && out.size < f.size) return out;
+      } catch (e) {}
+      return f;
+    }
+    inp.addEventListener('change', async function () {
+      var f = inp.files && inp.files[0]; if (!f) return;
+      msg.textContent = 'अपलोड होत आहे…';
+      var fd = new FormData(); fd.append('file', await shrink(f), f.name);
+      var res = await fetch('/api/admin/media', { method: 'POST', body: fd });
+      var d = await res.json().catch(function () { return {}; });
+      if (!res.ok) { msg.textContent = d.error || 'अपलोड अयशस्वी.'; return; }
+      var l = document.createElement('label'), r = document.createElement('input'), im = document.createElement('img');
+      r.type = 'radio'; r.name = 'image_key'; r.value = d.key; r.required = true; r.checked = true;
+      im.src = '/media/' + d.key;
+      l.append(r, im, f.name.slice(0, 18)); pick.prepend(l);
+      msg.textContent = '✓ फोटो अपलोड झाला व निवडला.'; inp.value = '';
+    });
+  })();
+</script>

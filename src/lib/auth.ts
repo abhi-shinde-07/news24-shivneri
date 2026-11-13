@@ -2,7 +2,8 @@ import type { D1 } from './db';
 
 const ITERATIONS = 100_000; // Workers' WebCrypto maximum for PBKDF2
 export const COOKIE = 'n24_session';
-const SESSION_DAYS = 7;
+// Long-lived so the installed phone app stays signed in; Lax so the cookie is sent when the app is opened from the home screen.
+const SESSION_DAYS = 90;
 const enc = new TextEncoder();
 const toHex = (b: ArrayBuffer | Uint8Array) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
 const fromHex = (h: string) => new Uint8Array((h.match(/../g) ?? []).map((x) => parseInt(x, 16)));
@@ -64,9 +65,9 @@ export async function destroySession(db: D1, request: Request) {
 }
 
 export const sessionCookie = (token: string, secure: boolean) =>
-  `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${SESSION_DAYS * 86400}${secure ? '; Secure' : ''}`;
+  `${COOKIE}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${SESSION_DAYS * 86400}${secure ? '; Secure' : ''}`;
 export const clearCookie = (secure: boolean) =>
-  `${COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0${secure ? '; Secure' : ''}`;
+  `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0${secure ? '; Secure' : ''}`;
 
 // 5 failures per IP per 15 minutes
 export async function tooManyAttempts(db: D1, ip: string) {

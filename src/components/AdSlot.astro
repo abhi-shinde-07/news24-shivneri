@@ -2,16 +2,18 @@
 import { getDB } from '../lib/db';
 import { getLiveAds, type Position } from '../lib/ads';
 import { mediaUrl } from '../lib/mediaUrl';
-// Rendered on the server; the slot disappears completely when no ad is live. Several ads rotate per render.
+// Rendered on the server; the slot disappears completely when no ad is live.
+// Every live ad for the position is shown side by side (wraps on phones), in a fresh random order per render.
 const { position } = Astro.props as { position: Position };
-const ads = (await getLiveAds(getDB(Astro.locals), Astro.locals)).filter((a) => a.position === position);
-const ad = ads.length ? ads[Math.floor(Math.random() * ads.length)] : null;
+const ads = (await getLiveAds(getDB(Astro.locals), Astro.locals)).filter((a) => a.position === position)
+  .map((a) => [Math.random(), a] as const).sort((x, y) => x[0] - y[0]).map(([, a]) => a);
 ---
-{ad && (
-  <aside class={`ad-slot ad-${position}`} aria-label="जाहिरात">
+{ads.length > 0 && (
+  <aside class={`ad-slot ad-${position}`} aria-label="जाहिरात" data-count={ads.length}>
     <span class="ad-label">जाहिरात</span>
-    <a href={`/go/${ad.id}`} rel="sponsored noopener" target="_blank">
-      <img src={mediaUrl(ad.image_key)} alt={`जाहिरात: ${ad.advertiser}`} loading="lazy" decoding="async" />
-    </a>
+    <div class="ad-row">{ads.map((ad) => (
+      <a href={`/go/${ad.id}`} rel="sponsored noopener" target="_blank">
+        <img src={mediaUrl(ad.image_key)} alt={`जाहिरात: ${ad.advertiser}`} loading="lazy" decoding="async" />
+      </a>))}</div>
   </aside>
 )}

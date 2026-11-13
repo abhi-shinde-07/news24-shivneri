@@ -80,7 +80,7 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
   </div>
   <header class="masthead">
     <div class="wrap mast-in">
-      <a href="/" class="mast-logo"><img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" fetchpriority="high" /></a>
+      <a href="/" class="mast-logo"><img src="/logo-mark.webp" alt="NEWS24 शिवनेरी" width="474" height="480" fetchpriority="high" /></a>
       <a href="/" class="mast-title">
         <span class="mast-name"><span>न्यूज २४</span> <b>शिवनेरी</b></span>
         <span class="mast-motto">{s.motto}</span>
@@ -99,24 +99,43 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
     <AdSlot position="top" />
     <main id="main"><slot /></main>
     <AdSlot position="bottom" />
-    <footer class="footer">
-      <div class="footer-brand">
-        <img src="/logo.png" alt="NEWS24 शिवनेरी" width="1200" height="1200" loading="lazy" />
-        <div><p class="tag">{s.motto}</p><p>पुणे जिल्ह्याचे मराठी डिजिटल वृत्तपत्र</p></div>
+  </div>
+  <footer class="site-foot">
+    <div class="wrap foot-grid">
+      <div class="foot-brand">
+        <img src="/logo-mark.webp" alt="NEWS24 शिवनेरी" width="474" height="480" loading="lazy" />
+        <p class="foot-name">न्यूज २४ <b>शिवनेरी</b></p>
+        <p class="tag">{s.motto}</p>
+        <p>पुणे जिल्ह्याचे विश्वासार्ह मराठी डिजिटल वृत्तपत्र</p>
+        <p class="visits" hidden>👁️ एकूण वाचक भेटी: <b id="visits"></b></p>
       </div>
-      <nav class="footer-col" aria-label="विभाग">
+      <nav class="foot-col" aria-label="विभाग">
         <h2>विभाग</h2>
         {cats.map((c) => <a href={`/category/${c.slug}`}>{c.name_mr}</a>)}
+        <a href="/latest">ताज्या बातम्या</a>
       </nav>
-      <nav class="footer-col" aria-label="इतर दुवे">
+      <nav class="foot-col" aria-label="इतर दुवे">
         <h2>NEWS24 SHIVNERI</h2>
         <a href="/about">आमच्याबद्दल</a><a href="/contact">संपर्क</a><a href="/editorial-policy">संपादकीय धोरण</a>
         <a href="/corrections">सुधारणा</a><a href="/epaper">ई-पेपर</a><a href="/photos">फोटो</a><a href="/videos">व्हिडिओ</a>
-        {social.map(([n, u]) => <a href={u} rel="noopener me" target="_blank">{n}</a>)}
       </nav>
-      <p class="footer-bottom">{s.footer_text} · <a href="/sitemap.xml">साइटमॅप</a> · <a href="/rss.xml">RSS</a></p>
-    </footer>
-  </div>
+      <div class="foot-col">
+        <h2>संपर्क</h2>
+        {tel && <a href={`tel:${tel}`}>📞 {s.phone}</a>}
+        {real(s.contact_email) && <a href={`mailto:${s.contact_email}`}>✉️ {s.contact_email}</a>}
+        {real(s.address) && <span>📍 {s.address}</span>}
+        <a class="foot-cta" href="/contact">तुमची बातमी पाठवा ›</a>
+        {social.length > 0 && <div class="foot-social">{social.map(([n, u]) => <a href={u} rel="noopener me" target="_blank">{n}</a>)}</div>}
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <div class="wrap foot-bottom-in">
+        <span>{s.footer_text}</span>
+        <span class="credit">Designed &amp; developed by <a href="https://www.techyverve.in" target="_blank" rel="noopener"><b>Techyverve</b></a>
+          · <a href="tel:+919172523881">📞 9172523881</a> · 📍 पुणे · <a href="https://www.techyverve.in" target="_blank" rel="noopener">www.techyverve.in</a></span>
+      </div>
+    </div>
+  </footer>
   <script is:inline src="/js/site.js" defer></script>
 </body>
 </html>

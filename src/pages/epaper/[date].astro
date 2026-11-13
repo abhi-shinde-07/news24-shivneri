@@ -2,34 +2,60 @@
 import Base from '../../layouts/Base.astro';
 import { getDB, type Epaper } from '../../lib/db';
 import { fmtDay } from '../../lib/format';
+import { cleanLayout, paras } from '../../lib/epaper';
+import { getSettings } from '../../lib/settings';
+import '../../styles/epaper.css';
 const date = Astro.params.date ?? '';
 const e = /^\d{4}-\d{2}-\d{2}$/.test(date) ? await getDB(Astro.locals).prepare(
-  `SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size FROM epapers WHERE edition_date = ? AND status = 'published'`)
-  .bind(date).first<Epaper>() : null;
+  `SELECT id, edition_date, title, edition_name, pdf_key, cover_key, size, layout FROM epapers WHERE edition_date = ? AND status = 'published'`)
+  .bind(date).first<Epaper & { layout: string | null }>() : null;
 if (!e) return Astro.rewrite('/404');
 Astro.response.headers.set('Cache-Control', 'public, max-age=300');
 const pdf = `/files/${e.pdf_key}`;
+// Editions made in the admin builder are shown as HTML pages; each story opens on its own page for sharing.
+const layout = e.layout ? cleanLayout(JSON.parse(e.layout)) : null;
+const motto = layout ? (await getSettings(getDB(Astro.locals))).motto : '';
+const day = fmtDay(e.edition_date);
 ---
 <Base title={`ई-पेपर ${fmtDay(e.edition_date)} – NEWS24 SHIVNERI`} description={`${e.title} – ${e.edition_name}, ${fmtDay(e.edition_date)}`}
   image={e.cover_key ? `/files/${e.cover_key}` : undefined}>
   <p class="crumbs"><a href="/">मुख्यपृष्ठ</a> › <a href="/epaper">ई-पेपर</a></p>
   <h1 class="h-mid">{e.title} · {fmtDay(e.edition_date)} · {e.edition_name}</h1>
+  {layout ? (<>
+    <p class="byline">कोणत्याही बातमीवर क्लिक करा — ती बातमी वेगळी उघडेल आणि फोटो म्हणून WhatsApp वर शेअर करता येईल.</p>
+    {layout.pages.map((p, n) => (
+      <div class="ep-page">
+        {n === 0
+          ? <header class="ep-mast"><img src="/logo-mark.webp" alt="" /><div class="ep-name">न्यूज २४ शिवनेरी<small>{motto}</small></div><div class="ep-info">{day}<br />{e.edition_name}<br />पान {n + 1}</div></header>
+          : <header class="ep-mast mini"><img src="/logo-mark.webp" alt="" /><div class="ep-name">न्यूज २४ शिवनेरी</div><div class="ep-info">{day} · पान {n + 1}</div></header>}
+        <div class="ep-grid">{p.items.map((it) => (
+          <a class={`ep-item s${it.s}`} href={`/epaper/${e.edition_date}/${it.id}`}>
+            <h3>{it.h}</h3>
+            {it.img && <img src={`/media/${it.img}`} alt="" loading="lazy" />}
+            {it.loc && <div class="ep-loc">{it.loc}</div>}
+            <div class="ep-body">{paras(it.t).map((x) => <p>{x}</p>)}</div>
+          </a>))}</div>
+        <div class="ep-foot"><span>NEWS24 शिवनेरी · www.news24shivneri.in</span><span>पान {n + 1}</span></div>
+      </div>))}
+  </>) : (<>
   <div class="viewer-bar" id="viewer" data-pdf={pdf}>
-    <button class="btn alt" type="button" data-act="prev">← मागील</button>
-    <span>पान <input id="pg" type="number" min="1" value="1" aria-label="पान क्रमांक" /> / <span id="total">…</span></span>
-    <button class="btn alt" type="button" data-act="next">पुढील →</button>
-    <button class="btn alt" type="button" data-act="out" aria-label="लहान करा">−</button>
-    <button class="btn alt" type="button" data-act="in" aria-label="मोठे करा">+</button>
-    <a class="btn" href={pdf} download={`news24-shivneri-${e.edition_date}.pdf`}>डाउनलोड</a>
-  </div>
-  <div id="pdf-wrap"><canvas id="pdf-canvas"></canvas><p id="pdf-msg">ई-पेपर लोड होत आहे…</p></div>
+      <button class="btn alt" type="button" data-act="prev">← मागील</button>
+      <span>पान <input id="pg" type="number" min="1" value="1" aria-label="पान क्रमांक" /> / <span id="total">…</span></span>
+      <button class="btn alt" type="button" data-act="next">पुढील →</button>
+      <button class="btn alt" type="button" data-act="out" aria-label="लहान करा">−</button>
+      <button class="btn alt" type="button" data-act="in" aria-label="मोठे करा">+</button>
+      <a class="btn" href={pdf} download={`news24-shivneri-${e.edition_date}.pdf`}>डाउनलोड</a>
+    </div>
+    <div id="pdf-wrap"><canvas id="pdf-canvas"></canvas><p id="pdf-msg">ई-पेपर लोड होत आहे…</p></div>
+  </>)}
 </Base>
 <script>
-  // pdf.js loads only on this page.
+  // pdf.js loads only on this page (PDF editions only).
   import * as pdfjs from 'pdfjs-dist';
   import workerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
   pdfjs.GlobalWorkerOptions.workerSrc = workerUrl;
-  const bar = document.getElementById('viewer')!;
+  const bar = document.getElementById('viewer');
+  if (bar) {
   const canvas = document.getElementById('pdf-canvas') as HTMLCanvasElement;
   const input = document.getElementById('pg') as HTMLInputElement;
   const msg = document.getElementById('pdf-msg')!;
@@ -57,4 +83,5 @@ const pdf = `/files/${e.pdf_key}`;
     doc = d; document.getElementById('total')!.textContent = String(d.numPages); input.max = String(d.numPages);
     msg.remove(); render();
   }).catch((e: unknown) => { console.error('e-paper', e); msg.textContent = 'ई-पेपर उघडता आला नाही. कृपया डाउनलोड करून पहा.'; });
+  }
 </script>

@@ -1,19 +1,21 @@
 ---
 import Base from '../layouts/Base.astro';
 import AdSlot from '../components/AdSlot.astro';
-import { getDB, getHome, getCategoryBlocks, getFeaturedVideos, getLatestEpaper } from '../lib/db';
-import { thumbOf } from '../lib/mediaUrl';
-import { fmtDay, fmtDate } from '../lib/format';
+import { getDB, getHome, getCategoryBlocks, getHomeVideos, getLatestEpaper } from '../lib/db';
+import { thumbOf, rewriteBody } from '../lib/mediaUrl';
+import { fmtDay, fmtDate, excerpt } from '../lib/format';
 import { catStyle } from '../lib/colors';
 const db = getDB(Astro.locals);
 const [{ lead, others, more, top, grid, breaking }, blocks, videos, epaper] =
-  await Promise.all([getHome(db), getCategoryBlocks(db), getFeaturedVideos(db, 4), getLatestEpaper(db)]);
+  await Promise.all([getHome(db), getCategoryBlocks(db), getHomeVideos(db, 4), getLatestEpaper(db)]);
 Astro.response.headers.set('Cache-Control', 'public, max-age=60');
+const main = others.concat(more).slice(0, 4);
+const latest = top.concat(grid).slice(0, 8);
 const ld = JSON.stringify({
   '@context': 'https://schema.org', '@type': 'NewsMediaOrganization', name: 'NEWS24 SHIVNERI',
   alternateName: 'NEWS24 शिवनेरी', url: 'https://www.news24shivneri.in/', logo: 'https://www.news24shivneri.in/logo.png',
   slogan: 'निर्भिड सत्याचा बुलंद आवाज',
-}).replace(/</g, '\\u003c');
+}).replace(/</g, '\u003c');
 ---
 <Base canonical="/">
   <script slot="head" type="application/ld+json" set:html={ld} />
@@ -23,51 +25,54 @@ const ld = JSON.stringify({
   <AdSlot position="main_headline" />
   {!lead && <p class="deck">अद्याप बातम्या प्रकाशित झालेल्या नाहीत.</p>}
   {lead && (
-  <section class="front2">
-    <a class="hero" href={`/news/${lead.id}`} style={catStyle(lead.category_slug)}>
+  <section class="lead3" style={catStyle(lead.category_slug)}>
+    <a class="lead3-img" href={`/news/${lead.id}`}>
       {thumbOf(lead) ? <img src={thumbOf(lead, lead.main_image_key ? undefined : 'hqdefault')!} alt={lead.main_image_caption ?? lead.headline} width="1200" height="675" fetchpriority="high" />
         : <span class="tnone">NEWS24 शिवनेरी</span>}
-      <span class="hero-cap">
-        <span class="kicker">{lead.category_name}</span>
-        <span class="hero-h">{lead.headline}</span>
-        <span class="hero-meta">{lead.location_label && <>{lead.location_label} · </>}{fmtDate(lead.published_at)}</span>
-      </span>
     </a>
-    <div class="topcards">
-      <h2 class="bar-head">आजच्या प्रमुख बातम्या</h2>
-      {others.concat(more).slice(0, 5).map((a) => (
-        <a class="mini" href={`/news/${a.id}`} style={catStyle(a.category_slug)}>
-          {thumbOf(a, 'mqdefault') ? <img src={thumbOf(a, 'mqdefault')!} alt="" loading="lazy" width="120" height="68" /> : <span class="tnone"></span>}
-          <span><span class="kicker">{a.category_name}</span><b>{a.headline}</b></span>
-        </a>))}
+    <div class="lead3-text">
+      <span class="kicker">{lead.category_name}</span>
+      <h1 class="lead3-h"><a href={`/news/${lead.id}`}>{lead.headline}</a></h1>
+      <p class="lead3-meta">{lead.location_label && <>{lead.location_label} · </>}{fmtDate(lead.published_at)}</p>
+      {lead.subtitle && <p class="lead3-sub">{lead.subtitle}</p>}
+      <p class="lead3-ex">{excerpt(lead.body_html, 360)}</p>
+      <details class="readhere"><summary>इथेच पूर्ण बातमी वाचा ▾</summary><div class="body" set:html={rewriteBody(lead.body_html)} /></details>
     </div>
   </section>)}
-  <AdSlot position="in_between" />
-  {(top.length > 0 || epaper) && (
-    <section class="strip">
-      <div>
-        <h2 class="bar-head">ताज्या बातम्या</h2>
-        <div class="tgrid">{top.concat(grid).slice(0, 8).map((a) => (
-          <a class="tcard" href={`/news/${a.id}`} style={catStyle(a.category_slug)}>
-            {thumbOf(a) ? <img src={thumbOf(a)!} alt="" loading="lazy" width="400" height="225" /> : <span class="tnone">NEWS24 शिवनेरी</span>}
-            <span class="kicker">{a.category_name}</span>
-            <b>{a.headline}</b>
-            {a.location_label && <small>{a.location_label}</small>}
-          </a>))}</div>
-      </div>
-      <aside class="strip-side">
-        <AdSlot position="sidebar" />
-        {epaper && (
-          <div class="epaper-box">
-            <h2 class="bar-head">ई-पेपर</h2>
-            <a href={`/epaper/${epaper.edition_date}`}>
-              {epaper.cover_key && <img src={`/files/${epaper.cover_key}`} alt={`ई-पेपर ${fmtDay(epaper.edition_date)}`} loading="lazy" width="300" height="420" />}
-              <b>{epaper.title}</b><span>{fmtDay(epaper.edition_date)}</span>
-            </a>
-          </div>)}
-        <div class="side-cta"><b>तुमच्या परिसरातील बातमी आम्हाला कळवा</b><a class="btn" href="/contact">संपर्क करा</a></div>
-      </aside>
+  {main.length > 0 && (
+    <section class="mainrow">
+      <h2 class="bar-head">आजच्या प्रमुख बातम्या</h2>
+      <div class="tgrid">{main.map((a) => (
+        <article class="tcard rcard" style={catStyle(a.category_slug)}>
+          <a href={`/news/${a.id}`} class="rcard-img">{thumbOf(a) ? <img src={thumbOf(a)!} alt="" loading="lazy" width="400" height="225" /> : <span class="tnone">NEWS24 शिवनेरी</span>}</a>
+          <span class="kicker">{a.category_name}</span>
+          <h3><a href={`/news/${a.id}`}>{a.headline}</a></h3>
+          <p class="ex">{excerpt(a.body_html, 160)}</p>
+          <details class="readhere"><summary>इथेच वाचा ▾</summary><div class="body" set:html={rewriteBody(a.body_html)} /></details>
+        </article>))}</div>
     </section>)}
+  <AdSlot position="in_between" />
+  <section class="cta-band">
+    <div class="cta-main"><b>तुमच्या परिसरातील बातमी आम्हाला कळवा</b><span>घटना, समस्या, कार्यक्रम — फोटोसह पाठवा.</span><a class="btn" href="/contact">संपर्क करा</a></div>
+    {epaper && (
+      <a class="cta-epaper" href={`/epaper/${epaper.edition_date}`}>
+        {epaper.cover_key && <img src={`/files/${epaper.cover_key}`} alt="" loading="lazy" width="90" height="126" />}
+        <span><b>आजचा ई-पेपर</b><small>{fmtDay(epaper.edition_date)}</small><em>वाचा ›</em></span>
+      </a>)}
+  </section>
+  {latest.length > 0 && (
+    <section class="catrow" style="--c:#c4001f">
+      <h2 class="cat-head"><a href="/latest">ताज्या बातम्या</a><span></span><a class="more" href="/latest">सर्व पहा ›</a></h2>
+      <div class="tgrid">{latest.map((a) => (
+        <a class="tcard" href={`/news/${a.id}`} style={catStyle(a.category_slug)}>
+          {thumbOf(a) ? <img src={thumbOf(a)!} alt="" loading="lazy" width="400" height="225" /> : <span class="tnone">NEWS24 शिवनेरी</span>}
+          <span class="kicker">{a.category_name}</span>
+          <b>{a.headline}</b>
+          <span class="ex">{excerpt(a.body_html, 110)}</span>
+          {a.location_label && <small>{a.location_label}</small>}
+        </a>))}</div>
+    </section>)}
+  <AdSlot position="sidebar" />
   {blocks.map((b) => (
     <section class="catrow" style={catStyle(b.slug)}>
       <h2 class="cat-head"><a href={`/category/${b.slug}`}>{b.name}</a><span></span><a class="more" href={`/category/${b.slug}`}>सर्व पहा ›</a></h2>
@@ -82,7 +87,7 @@ const ld = JSON.stringify({
     <section>
       <h2 class="cat-head" style="--c:#141414"><a href="/videos">व्हिडिओ</a><span></span><a class="more" href="/videos">सर्व पहा ›</a></h2>
       <div class="vgrid">{videos.map((v) => (
-        <a class="vcard" href={`/videos/${v.id}`}>
+        <a class="vcard" href={v.href}>
           <span class="vthumb"><img src={`https://i.ytimg.com/vi/${v.youtube_id}/hqdefault.jpg`} alt="" loading="lazy" width="480" height="360" /><span class="play" aria-hidden="true">▶</span></span>
           <b>{v.title}</b></a>))}</div>
     </section>)}

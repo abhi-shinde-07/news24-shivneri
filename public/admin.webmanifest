@@ -7,6 +7,8 @@
   "start_url": "/admin",
   "scope": "/admin",
   "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "launch_handler": { "client_mode": "navigate-existing" },
   "orientation": "any",
   "background_color": "#f5f3ef",
   "theme_color": "#c4001f",

@@ -1,0 +1,216 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getDB } from '../../../lib/db';
+import { getSettings } from '../../../lib/settings';
+import { cleanLayout } from '../../../lib/epaper';
+import '../../../styles/epaper.css';
+// Build an e-paper from news: add stories, auto-arrange, resize/move/edit blocks, preview, save or publish.
+const db = getDB(Astro.locals);
+const id = Number(Astro.url.searchParams.get('id')) || 0;
+type Row = { id: number; edition_date: string; title: string; edition_name: string; status: string; layout: string | null };
+const ed = id ? await db.prepare('SELECT id, edition_date, title, edition_name, status, layout FROM epapers WHERE id = ?').bind(id).first<Row>() : null;
+if (id && (!ed || !ed.layout)) return Astro.redirect('/admin/epaper');
+const s = await getSettings(db);
+const text = (html: string) => html.replace(/<\/(p|h\d|li|div)>|<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
+const arts = (await db.prepare(
+  `SELECT id, headline, location_label, main_image_key, body_html, substr(published_at,1,10) AS day FROM articles
+   WHERE status = 'published' ORDER BY published_at DESC LIMIT 60`)
+  .all<{ id: number; headline: string; location_label: string | null; main_image_key: string | null; body_html: string; day: string }>()).results
+  .map((a) => ({ aid: a.id, h: a.headline, loc: a.location_label ?? '', img: a.main_image_key ?? '', t: text(a.body_html), day: a.day }));
+const data = JSON.stringify({
+  id: ed?.id ?? 0,
+  date: ed?.edition_date ?? new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10),
+  title: ed?.title ?? 'NEWS24 शिवनेरी ई-पेपर',
+  edition: ed?.edition_name ?? 'पुणे जिल्हा आवृत्ती',
+  status: ed?.status ?? 'draft',
+  layout: ed?.layout ? cleanLayout(JSON.parse(ed.layout)) : { pages: [{ items: [] }] },
+  motto: s.motto, arts,
+}).replace(/</g, '\\u003c');
+---
+<AdminLayout title={ed ? 'ई-पेपर संपादन' : 'नवीन ई-पेपर बनवा'}>
+  <style is:global>
+    .eb-top{display:flex;flex-wrap:wrap;gap:.5rem;align-items:end;background:#fff;border:1px solid var(--line);border-radius:10px;padding:.7rem}
+    .eb-top .f{margin:0}.eb-top input{min-width:0}
+    .eb-btns{display:flex;flex-wrap:wrap;gap:.4rem;width:100%;align-items:center}
+    .eb-btns button{width:auto;margin:0}
+    .eb{display:grid;grid-template-columns:minmax(0,1fr);gap:1rem;margin-top:1rem}
+    @media(min-width:1100px){.eb{grid-template-columns:300px minmax(0,1fr)}.eb-side{position:sticky;top:70px;align-self:start}}
+    .eb-side{background:#fff;border:1px solid var(--line);border-radius:10px;padding:.7rem;max-height:80vh;overflow:auto}
+    .eb-art{display:flex;gap:.5rem;align-items:center;padding:.45rem 0;border-bottom:1px solid #eee;font-size:.88rem}
+    .eb-art img{width:54px;height:38px;object-fit:cover;border-radius:4px;flex:none}.eb-art span{flex:1;line-height:1.35}
+    .eb-art.used{opacity:.45}.eb-art button{padding:.3rem .6rem;font-size:.8rem;margin:0;width:auto}
+    .eb-canvas{background:#d9d4cb;border-radius:10px;padding:1rem .6rem;min-width:0}
+    .eb-pagehead{display:flex;gap:.6rem;align-items:center;max-width:900px;margin:0 auto .4rem;font-weight:600;color:#3d3d3d}
+    .eb-pagehead button{width:auto;margin:0;padding:.25rem .6rem;font-size:.8rem}
+    .editing .ep-item{outline:1px dashed #c4001f55;outline-offset:-3px}
+    .editing .ep-item [contenteditable]{background:#fff8d6;border-radius:2px;cursor:text}
+    .editing .ep-item [contenteditable]:focus{outline:2px solid #c4001f;background:#fff}
+    .eb-tools{display:none;flex-wrap:wrap;gap:3px;margin:-2px 0 6px;font-family:system-ui,sans-serif}
+    .editing .eb-tools{display:flex}
+    .eb-tools button{width:auto;margin:0;padding:2px 7px;font-size:12px;line-height:1.6;background:#1f0a0d;border-radius:4px}
+    .eb-tools button.x{background:#b3001b}.eb-tools .sz{font-size:11px;color:#555;align-self:center;padding:0 3px}
+    .eb-empty{padding:2rem;text-align:center;color:#777;grid-column:1/-1}
+    .eb-msg{font-weight:600}
+  </style>
+  <p><a href="/admin/epaper">← ई-पेपर यादी</a></p>
+  <div class="eb-top">
+    <div class="f"><label for="eb-date">तारीख</label><input id="eb-date" type="date" /></div>
+    <div class="f" style="flex:1;min-width:180px"><label for="eb-title">शीर्षक</label><input id="eb-title" maxlength="200" /></div>
+    <div class="f" style="min-width:150px"><label for="eb-ed">आवृत्ती</label><input id="eb-ed" maxlength="100" /></div>
+    <div class="eb-btns">
+      <button type="button" class="sec" id="eb-auto">⚡ आपोआप मांडणी</button>
+      <button type="button" class="sec" id="eb-mode">👁️ प्रिव्ह्यू पहा</button>
+      <button type="button" class="sec" id="eb-addpage">+ नवीन पान</button>
+      <button type="button" class="sec" id="eb-blank">+ स्वतः बातमी लिहा</button>
+      <button type="button" class="sec" id="eb-draft">💾 ड्राफ्ट जतन</button>
+      <button type="button" id="eb-pub">✅ प्रकाशित करा</button>
+      <span class="eb-msg" id="eb-msg" role="status"></span>
+    </div>
+  </div>
+  <div class="eb">
+    <aside class="eb-side">
+      <b>बातम्या निवडा</b><br /><small>“+ जोडा” दाबा. नंतर “⚡ आपोआप मांडणी” दाबा — पान आपोआप तयार होईल.</small>
+      <input id="eb-q" placeholder="शोधा…" style="margin:.5rem 0" />
+      <div id="eb-list"></div>
+    </aside>
+    <div class="eb-canvas editing" id="eb-canvas"></div>
+  </div>
+  <p><small><b>कसे वापरावे:</b> बातमीवरील बटणे — ↑ ↓ जागा बदला · − + रुंदी (१ ते ४ स्तंभ) · ⤒ ⤓ मागच्या/पुढच्या पानावर · 🖼️✕ फोटो काढा · ✕ बातमी काढा. शीर्षक/मजकूर थेट पानावर क्लिक करून बदला. “प्रिव्ह्यू” मध्ये वाचकांना दिसेल तसे पान दिसते.</small></p>
+  <script type="application/json" id="eb-data" set:html={data}></script>
+</AdminLayout>
+<script>
+  import { toCanvas } from 'html-to-image';
+  type Item = { id: string; aid?: number; h: string; t: string; loc?: string; img?: string; s: 1 | 2 | 3 | 4 };
+  type Art = { aid: number; h: string; t: string; loc: string; img: string; day: string };
+  const D = JSON.parse(document.getElementById('eb-data')!.textContent!);
+  let pages: { items: Item[] }[] = D.layout.pages;
+  let editing = true;
+  const $ = (id: string) => document.getElementById(id) as HTMLInputElement;
+  const canvas = $('eb-canvas'), msg = $('eb-msg');
+  $('eb-date').value = D.date; $('eb-title').value = D.title; $('eb-ed').value = D.edition;
+  const uid = () => Math.random().toString(36).slice(2, 10);
+  const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const dayMr = () => new Date($('eb-date').value + 'T00:00:00').toLocaleDateString('mr-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const all = () => pages.flatMap((p) => p.items);
+
+  function mast(n: number) {
+    return n === 1
+      ? `<header class="ep-mast"><img src="/logo-mark.webp" alt=""><div class="ep-name">न्यूज २४ शिवनेरी<small>${esc(D.motto)}</small></div><div class="ep-info">${esc(dayMr())}<br>${esc($('eb-ed').value)}<br>पान ${n}</div></header>`
+      : `<header class="ep-mast mini"><img src="/logo-mark.webp" alt=""><div class="ep-name">न्यूज २४ शिवनेरी</div><div class="ep-info">${esc(dayMr())} · पान ${n}</div></header>`;
+  }
+  function itemHtml(it: Item, n: number, i: number) {
+    const ce = editing ? ' contenteditable="true" spellcheck="false"' : '';
+    const body = it.t.split('\n').filter(Boolean).map((p) => `<p>${esc(p)}</p>`).join('');
+    return `<article class="ep-item s${it.s}" data-p="${n}" data-i="${i}">
+      <div class="eb-tools"><button data-a="up" title="आधी">↑</button><button data-a="down" title="नंतर">↓</button>
+        <button data-a="narrow" title="अरुंद">−</button><span class="sz">${it.s}/4</span><button data-a="wide" title="रुंद">+</button>
+        <button data-a="prevp" title="मागच्या पानावर">⤒</button><button data-a="nextp" title="पुढच्या पानावर">⤓</button>
+        ${it.img ? '<button data-a="noimg" title="फोटो काढा">🖼️✕</button>' : ''}<button data-a="del" class="x" title="काढा">✕</button></div>
+      <h3 data-f="h"${ce}>${esc(it.h)}</h3>
+      ${it.img ? `<img src="/media/${it.img}" alt="">` : ''}
+      ${it.loc ? `<div class="ep-loc" data-f="loc"${ce}>${esc(it.loc)}</div>` : ''}
+      <div class="ep-body" data-f="t"${ce}>${body}</div></article>`;
+  }
+  function render() {
+    canvas.classList.toggle('editing', editing);
+    canvas.innerHTML = pages.map((p, n) => `
+      ${editing ? `<div class="eb-pagehead">पान ${n + 1}${pages.length > 1 && !p.items.length ? ` <button type="button" class="danger" data-delpage="${n}">हे रिकामे पान काढा</button>` : ''}</div>` : ''}
+      <div class="ep-page">${mast(n + 1)}<div class="ep-grid">${p.items.map((it, i) => itemHtml(it, n, i)).join('') || (editing ? '<div class="eb-empty">डावीकडून बातम्या जोडा</div>' : '')}</div>
+      <div class="ep-foot"><span>NEWS24 शिवनेरी · www.news24shivneri.in</span><span>पान ${n + 1}</span></div></div>`).join('');
+    list();
+  }
+  function list() {
+    const q = $('eb-q').value.trim(), used = new Set(all().map((i) => i.aid));
+    $('eb-list').innerHTML = (D.arts as Art[]).filter((a) => !q || a.h.includes(q)).map((a) =>
+      `<div class="eb-art${used.has(a.aid) ? ' used' : ''}">${a.img ? `<img src="/media/${a.img}" alt="">` : ''}<span>${esc(a.h)}<br><small>${a.day}</small></span>
+       <button type="button" data-add="${a.aid}" ${used.has(a.aid) ? 'disabled' : ''}>${used.has(a.aid) ? '✓' : '+ जोडा'}</button></div>`).join('');
+  }
+  // Auto format: lead story full width on each page, stories with photos or long text two columns, the rest one column.
+  function auto() {
+    const items = all();
+    if (!items.length) { msg.textContent = 'आधी बातम्या जोडा.'; return; }
+    const out: { items: Item[] }[] = [];
+    let cur: Item[] = [], units = 0;
+    for (const it of items) {
+      it.s = cur.length === 0 ? 4 : it.img || it.t.length > 1400 ? 2 : 1;
+      const w = it.s === 4 ? 4 : it.s * (it.t.length > 900 ? 1.5 : 1);
+      if (cur.length && units + w > 14) { out.push({ items: cur }); cur = []; units = 0; it.s = 4; }
+      cur.push(it); units += it.s === 4 ? 4 : w;
+    }
+    if (cur.length) out.push({ items: cur });
+    // widen the last story so the last row has no gap
+    for (const p of out) {
+      const rest = p.items.slice(1).reduce((n, i) => n + i.s, 0) % 4, last = p.items[p.items.length - 1];
+      if (rest && p.items.length > 1) last.s = Math.min(4, last.s + 4 - rest) as Item['s'];
+    }
+    pages = out; render(); msg.textContent = `✓ ${out.length} पानांत मांडणी झाली.`;
+  }
+  canvas.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const dp = t.closest('[data-delpage]') as HTMLElement | null;
+    if (dp) { pages.splice(Number(dp.dataset.delpage), 1); render(); return; }
+    const b = t.closest('button[data-a]') as HTMLElement | null; if (!b) return;
+    const el = b.closest('.ep-item') as HTMLElement, n = Number(el.dataset.p), i = Number(el.dataset.i), arr = pages[n].items, it = arr[i];
+    const a = b.dataset.a;
+    if (a === 'up' && i > 0) [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
+    else if (a === 'down' && i < arr.length - 1) [arr[i + 1], arr[i]] = [arr[i], arr[i + 1]];
+    else if (a === 'narrow' && it.s > 1) it.s = (it.s - 1) as Item['s'];
+    else if (a === 'wide' && it.s < 4) it.s = (it.s + 1) as Item['s'];
+    else if (a === 'prevp' && n > 0) { arr.splice(i, 1); pages[n - 1].items.push(it); }
+    else if (a === 'nextp') { arr.splice(i, 1); if (!pages[n + 1]) pages.push({ items: [] }); pages[n + 1].items.unshift(it); }
+    else if (a === 'noimg') delete it.img;
+    else if (a === 'del') arr.splice(i, 1);
+    render();
+  });
+  // Direct editing on the page.
+  canvas.addEventListener('input', (e) => {
+    const f = e.target as HTMLElement, el = f.closest('.ep-item') as HTMLElement | null; if (!el) return;
+    const it = pages[Number(el.dataset.p)].items[Number(el.dataset.i)];
+    if (f.dataset.f === 'h') it.h = f.innerText.trim();
+    else if (f.dataset.f === 'loc') it.loc = f.innerText.trim();
+    else if (f.dataset.f === 't') it.t = f.innerText.split('\n').map((x) => x.trim()).filter(Boolean).join('\n');
+  });
+  $('eb-list').addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest('[data-add]') as HTMLElement | null; if (!b) return;
+    const a = (D.arts as Art[]).find((x) => x.aid === Number(b.dataset.add))!;
+    const last = pages[pages.length - 1];
+    last.items.push({ id: uid(), aid: a.aid, h: a.h, t: a.t, loc: a.loc || undefined, img: a.img || undefined, s: last.items.length ? (a.img ? 2 : 1) : 4 });
+    render();
+  });
+  $('eb-q').addEventListener('input', list);
+  $('eb-auto').onclick = auto;
+  $('eb-addpage').onclick = () => { pages.push({ items: [] }); render(); };
+  $('eb-blank').onclick = () => { pages[pages.length - 1].items.push({ id: uid(), h: 'येथे शीर्षक लिहा', t: 'येथे बातमीचा मजकूर लिहा.', s: 2 }); editing = true; render(); };
+  $('eb-mode').onclick = () => { editing = !editing; $('eb-mode').textContent = editing ? '👁️ प्रिव्ह्यू पहा' : '✏️ संपादन चालू ठेवा'; render(); };
+  ['eb-date', 'eb-ed'].forEach((x) => $(x).addEventListener('change', render));
+
+  // Picture of page 1 for the e-paper archive.
+  async function cover(): Promise<Blob | null> {
+    const wasEditing = editing; editing = false; render();
+    try {
+      const pg = canvas.querySelector('.ep-page') as HTMLElement;
+      const c = await toCanvas(pg, { pixelRatio: 600 / pg.offsetWidth, backgroundColor: '#fffdf7' });
+      return await new Promise((r) => c.toBlob(r, 'image/webp', 0.8));
+    } catch (err) { console.warn('cover', err); return null; }
+    finally { editing = wasEditing; render(); }
+  }
+  async function save(status: 'draft' | 'published') {
+    msg.textContent = 'जतन होत आहे…';
+    const fd = new FormData();
+    fd.append('id', String(D.id)); fd.append('edition_date', $('eb-date').value); fd.append('title', $('eb-title').value);
+    fd.append('edition_name', $('eb-ed').value); fd.append('status', status);
+    fd.append('layout', JSON.stringify({ pages: pages.filter((p) => p.items.length) }));
+    const c = await cover(); if (c) fd.append('cover', c, 'cover.webp');
+    const res = await fetch('/api/admin/epaper/layout', { method: 'POST', body: fd });
+    const d = await res.json().catch(() => ({}));
+    if (!res.ok) { msg.textContent = '⚠️ ' + (d.error ?? 'जतन झाले नाही.'); return; }
+    D.id = d.id; history.replaceState(null, '', '/admin/epaper/build?id=' + d.id);
+    msg.innerHTML = status === 'published'
+      ? `✅ प्रकाशित झाला. <a href="/epaper/${$('eb-date').value}" target="_blank">वेबसाइटवर पहा</a>` : '💾 ड्राफ्ट जतन झाला.';
+  }
+  $('eb-draft').onclick = () => save('draft');
+  $('eb-pub').onclick = () => save('published');
+  render();
+</script>

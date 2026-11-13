@@ -1,0 +1,70 @@
+---
+import Base from '../../../layouts/Base.astro';
+import { getDB } from '../../../lib/db';
+import { fmtDay } from '../../../lib/format';
+import { cleanLayout, findItem, paras } from '../../../lib/epaper';
+import { SITE } from '../../../lib/page';
+import '../../../styles/epaper.css';
+// One story cut out of a built e-paper, ready to share on WhatsApp as a picture.
+const date = Astro.params.date ?? '', itemId = Astro.params.item ?? '';
+const e = /^\d{4}-\d{2}-\d{2}$/.test(date) ? await getDB(Astro.locals).prepare(
+  `SELECT edition_date, edition_name, layout FROM epapers WHERE edition_date = ? AND status = 'published' AND layout IS NOT NULL`)
+  .bind(date).first<{ edition_date: string; edition_name: string; layout: string }>() : null;
+const layout = e ? cleanLayout(JSON.parse(e.layout)) : null;
+const found = layout ? findItem(layout, itemId) : null;
+if (!e || !found) return Astro.rewrite('/404');
+Astro.response.headers.set('Cache-Control', 'public, max-age=300');
+const { it, page } = found;
+const day = fmtDay(e.edition_date);
+const url = `${SITE}/epaper/${e.edition_date}/${it.id}`;
+---
+<Base title={`${it.h} – ई-पेपर ${day} – NEWS24 SHIVNERI`} description={paras(it.t).join(' ').slice(0, 160)}
+  image={it.img ? `/media/${it.img}` : undefined}>
+  <p class="crumbs"><a href="/">मुख्यपृष्ठ</a> › <a href="/epaper">ई-पेपर</a> › <a href={`/epaper/${e.edition_date}`}>{day}</a> › पान {page}</p>
+  <div class="share clip-share">
+    <button type="button" class="btn" id="clip-share" data-name={`news24-shivneri-${e.edition_date}-${it.id}.png`} data-url={url} data-title={it.h}>📲 फोटो म्हणून WhatsApp वर शेअर करा</button>
+    <button type="button" class="btn alt" id="clip-dl">⬇️ फोटो डाउनलोड करा</button>
+    <a class="wa" href={`https://wa.me/?text=${encodeURIComponent(`${it.h}\n${url}`)}`} target="_blank" rel="noopener">लिंक WhatsApp वर पाठवा</a>
+    <span id="clip-msg" role="status"></span>
+  </div>
+  <div class="ep-page clip" id="clip" style="max-width:640px">
+    <header class="ep-mast mini"><img src="/logo-mark.webp" alt="" /><div class="ep-name">न्यूज २४ शिवनेरी</div><div class="ep-info">{day}<br />{e.edition_name} · पान {page}</div></header>
+    <article class="ep-item s4" style="border:0">
+      <h3>{it.h}</h3>
+      {it.img && <img src={`/media/${it.img}`} alt="" />}
+      {it.loc && <div class="ep-loc">{it.loc}</div>}
+      <div class="ep-body" style="columns:1">{paras(it.t).map((x) => <p>{x}</p>)}</div>
+    </article>
+    <div class="ep-foot"><span>www.news24shivneri.in</span><span>निर्भिड सत्याचा बुलंद आवाज</span></div>
+  </div>
+  <p style="text-align:center"><a class="btn alt" href={`/epaper/${e.edition_date}`}>← पूर्ण ई-पेपर</a></p>
+</Base>
+<script>
+  import { toBlob } from 'html-to-image';
+  const btn = document.getElementById('clip-share') as HTMLButtonElement;
+  const msg = document.getElementById('clip-msg')!;
+  const clip = document.getElementById('clip')!;
+  const name = btn.dataset.name!;
+  const picture = async () => {
+    msg.textContent = 'फोटो तयार होत आहे…';
+    const b = await toBlob(clip, { pixelRatio: 2, backgroundColor: '#fffdf7' });
+    msg.textContent = '';
+    if (!b) throw new Error('no image');
+    return new File([b], name, { type: 'image/png' });
+  };
+  const download = (f: File) => {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name; a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  };
+  btn.addEventListener('click', async () => {
+    try {
+      const f = await picture();
+      // Phones: opens the share sheet where WhatsApp can be picked. Computers: the picture is downloaded.
+      if (navigator.canShare?.({ files: [f] })) await navigator.share({ files: [f], title: btn.dataset.title, text: `${btn.dataset.title}\n${btn.dataset.url}` });
+      else { download(f); msg.textContent = 'फोटो डाउनलोड झाला — आता WhatsApp मध्ये जोडा.'; }
+    } catch (err) { if ((err as Error).name !== 'AbortError') msg.textContent = 'फोटो तयार झाला नाही. पुन्हा प्रयत्न करा.'; }
+  });
+  document.getElementById('clip-dl')!.addEventListener('click', async () => {
+    try { download(await picture()); } catch { msg.textContent = 'फोटो तयार झाला नाही.'; }
+  });
+</script>
