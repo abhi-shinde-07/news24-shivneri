@@ -570,3 +570,10 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
   .rcard:has(.readhere[open]) .rcard-img { float: none; width: 100%; margin: 0 0 .5rem !important; }
   .rcard:has(.readhere[open]) .kicker, .rcard:has(.readhere[open]) h3, .rcard:has(.readhere[open]) .readhere { margin-left: .8rem; margin-right: .8rem; }
 }
+
+/* Smooth "read here" opening */
+::view-transition-group(*) { animation-duration: .45s; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
+::view-transition-old(*), ::view-transition-new(*) { height: 100%; object-fit: cover; }
+.readhere[open] .body { animation: read-in .45s ease-out both; }
+@keyframes read-in { from { opacity: 0; transform: translateY(8px); } }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*) { animation: none; } .readhere[open] .body { animation: none; } }

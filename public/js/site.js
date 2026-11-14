@@ -15,9 +15,20 @@
   });
   ['gesturestart', 'gesturechange'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }); });
   document.addEventListener('touchmove', function (e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
-  // A top-news card opened to read grows to the full row: bring it into view.
-  document.querySelectorAll('.rcard .readhere').forEach(function (d) {
-    d.addEventListener('toggle', function () { if (d.open) d.closest('.rcard').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  // "Read here": the story opens with a smooth animation; a top-news card grows to the full row.
+  var stories = document.querySelectorAll('.lead3, .mainrow .rcard');
+  stories.forEach(function (el, i) { el.style.viewTransitionName = 'story' + i; });
+  document.querySelectorAll('.lead3 .readhere > summary, .rcard .readhere > summary').forEach(function (sum) {
+    sum.addEventListener('click', function (e) {
+      var d = sum.parentNode, card = d.closest('.rcard'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      e.preventDefault();
+      var flip = function () { d.open = !d.open; };
+      var settle = function () {
+        if (card && d.open && card.getBoundingClientRect().top < 0) card.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' });
+      };
+      if (document.startViewTransition && !reduce) document.startViewTransition(flip).finished.then(settle);
+      else { flip(); settle(); }
+    });
   });
   var t = document.getElementById('today');
   if (t) t.textContent = new Date().toLocaleDateString('mr-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
