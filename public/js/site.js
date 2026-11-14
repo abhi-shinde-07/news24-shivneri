@@ -5,6 +5,16 @@
   if (vc) fetch('/api/visit', { method: 'POST' }).then(function (r) { return r.json(); }).then(function (d) {
     vc.textContent = Number(d.visits).toLocaleString('mr-IN'); vc.parentNode.hidden = false;
   }).catch(function () {});
+  // Text cannot be copied, cut or right-clicked (forms still work); pinch zoom is off.
+  var editable = function (e) { return e.target.closest && e.target.closest('input, textarea, select, [contenteditable]'); };
+  ['copy', 'cut', 'contextmenu', 'dragstart', 'selectstart'].forEach(function (ev) {
+    document.addEventListener(ev, function (e) { if (!editable(e)) e.preventDefault(); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && /^[acsup]$/i.test(e.key) && !editable(e)) e.preventDefault();
+  });
+  ['gesturestart', 'gesturechange'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }); });
+  document.addEventListener('touchmove', function (e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
   var t = document.getElementById('today');
   if (t) t.textContent = new Date().toLocaleDateString('mr-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   document.querySelectorAll('[data-copy]').forEach(function (b) {

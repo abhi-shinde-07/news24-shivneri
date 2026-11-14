@@ -53,7 +53,10 @@ const ld = JSON.stringify({
     </section>)}
   <AdSlot position="in_between" />
   <section class="cta-band">
-    <div class="cta-main"><b>तुमच्या परिसरातील बातमी आम्हाला कळवा</b><span>घटना, समस्या, कार्यक्रम — फोटोसह पाठवा.</span><a class="btn" href="/contact">संपर्क करा</a></div>
+    <div class="cta-icon" aria-hidden="true">📣</div>
+    <div class="cta-main"><small>वाचकांचा आवाज</small><b>तुमच्या परिसरातील बातमी आम्हाला कळवा</b>
+      <span>घटना, समस्या, कार्यक्रम किंवा यश — फोटो आणि व्हिडिओसह पाठवा. तुमची बातमी NEWS24 शिवनेरी वर झळकेल.</span>
+      <a class="btn" href="/contact">✍️ बातमी पाठवा</a></div>
     {epaper && (
       <a class="cta-epaper" href={`/epaper/${epaper.edition_date}`}>
         {epaper.cover_key && <img src={`/files/${epaper.cover_key}`} alt="" loading="lazy" width="90" height="126" />}

@@ -6,8 +6,8 @@
   --rule: #1a1a1a;
   --rule-light: #bdbdbd;
   --red: #b3001b;
-  --font-head: 'Noto Serif Devanagari', 'Tiro Devanagari Marathi', serif;
-  --font-body: 'Mukta', 'Noto Sans Devanagari', system-ui, sans-serif;
+  --font-head: 'Martel', 'Noto Serif Devanagari', serif;
+  --font-body: 'Hind', 'Mukta', 'Noto Sans Devanagari', system-ui, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -497,3 +497,49 @@ html { scrollbar-width: thin; scrollbar-color: #c4001f transparent; }
   .mast-motto { display: inline-flex; align-items: center; justify-content: center; align-self: center;
     padding: .55rem 1.6rem .15rem; line-height: 1.4; border-radius: 999px; margin-top: .5rem; box-shadow: 0 2px 6px rgba(0,0,0,.18); }
 }
+
+/* Readers cannot select or copy text; forms still work */
+body { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: manipulation; text-rendering: optimizeLegibility; -webkit-font-smoothing: antialiased; }
+input, textarea, select, [contenteditable] { -webkit-user-select: text; user-select: text; }
+img { -webkit-user-drag: none; }
+/* Masthead name keeps its heavier newspaper face */
+.mast-name, .foot-name, .ep-name { font-family: 'Noto Serif Devanagari', serif; }
+h1, h2, h3, .h-lead, .lead3-h { letter-spacing: -.005em; }
+
+/* Lead story: image keeps its shape when the full story is opened */
+.lead3 { align-items: start; }
+.lead3-img { align-self: start; display: block; }
+.lead3-img img, .lead3-img .tnone { height: auto; min-height: 0; aspect-ratio: 16/10; }
+.rcard { align-self: start; }
+.rcard-img img { aspect-ratio: 16/9; height: auto; object-fit: cover; }
+
+/* Reader news band: one full-width banner */
+.cta-band { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 1.4rem; position: relative; overflow: hidden;
+  background: radial-gradient(circle at 92% 20%, rgba(255,207,63,.28), transparent 40%), linear-gradient(115deg, #c4001f 0%, #9a0018 55%, #5e000e 100%);
+  color: #fff; border-radius: 12px; padding: 1.4rem 1.5rem; box-shadow: 0 10px 26px rgba(150,0,25,.25); grid-template-columns: none; }
+.cta-band::after { content: ''; position: absolute; right: -40px; bottom: -60px; width: 220px; height: 220px; border-radius: 50%; border: 28px solid rgba(255,255,255,.07); pointer-events: none; }
+.cta-icon { font-size: 2.6rem; width: 4.4rem; height: 4.4rem; display: grid; place-items: center; background: rgba(255,255,255,.14); border-radius: 50%; flex: none; animation: cta-pulse 2.4s ease-in-out infinite; }
+@keyframes cta-pulse { 50% { transform: scale(1.08); box-shadow: 0 0 0 10px rgba(255,255,255,.06); } }
+.cta-band .cta-main { flex: 1 1 320px; background: none; padding: 0; display: flex; flex-direction: column; align-items: flex-start; gap: .35rem; border-radius: 0; }
+.cta-main small { text-transform: uppercase; letter-spacing: .08em; color: #ffcf3f; font-weight: 600; font-size: .8rem; }
+.cta-band .cta-main b { font-size: clamp(1.25rem, 2.6vw, 1.7rem); line-height: 1.35; flex: none; }
+.cta-band .cta-main span { color: #ffe3e7; flex: none; max-width: 60ch; }
+.cta-band .cta-main .btn { margin-top: .4rem; padding: .6rem 1.3rem; border-radius: 999px; font-size: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,.25); }
+.cta-band .cta-main .btn:hover { background: #fff; text-decoration: none; }
+.cta-band .cta-epaper { position: relative; z-index: 1; background: rgba(255,255,255,.96); border: 0; border-radius: 10px; flex: 0 1 260px; }
+@media (max-width: 640px) { .cta-icon { display: none; } .cta-band { padding: 1.1rem; } .cta-band .cta-epaper { flex-basis: 100%; } }
+@media (prefers-reduced-motion: reduce) { .cta-icon { animation: none; } }
+
+/* Techyverve credit band */
+.tv-band { background: #0d0507; border-top: 1px solid #3a1a20; }
+.tv-in { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .8rem 1.5rem; padding-top: .9rem; padding-bottom: .9rem; }
+.tv-brand { display: flex; align-items: center; gap: .8rem; color: #fff; }
+.tv-brand img { width: 46px; height: 46px; object-fit: contain; padding: 7px; border-radius: 12px; background: linear-gradient(135deg, #1e6bff, #7b2ff7); box-shadow: 0 4px 14px rgba(80,90,255,.35); transition: transform .3s; }
+.tv-brand:hover img { transform: rotate(-8deg) scale(1.06); }
+.tv-brand span { display: flex; flex-direction: column; line-height: 1.25; }
+.tv-brand small { color: #a99; font-size: .75rem; }
+.tv-brand b { font-family: system-ui, sans-serif; letter-spacing: .14em; font-size: 1.05rem; background: linear-gradient(90deg, #6ea8ff, #b78cff); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.tv-brand em { font-style: normal; color: #bba; font-size: .78rem; }
+.tv-links { display: flex; flex-wrap: wrap; gap: .4rem; }
+.tv-links a, .tv-links span { font-size: .85rem; color: #e6dcdd; border: 1px solid #3a2328; border-radius: 999px; padding: .3rem .8rem; }
+.site-foot .tv-links a:hover { border-color: #7b8cff; color: #fff; }

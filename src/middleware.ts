@@ -1,6 +1,6 @@
 import { defineMiddleware } from 'astro:middleware';
 import { getDB } from './lib/db';
-import { getUser } from './lib/auth';
+import { getUser, renewSession } from './lib/auth';
 
 const MEDIA = ((import.meta.env.PUBLIC_MEDIA_BASE as string | undefined) ?? '').replace(/\/$/, '');
 const mediaOrigin = MEDIA ? new URL(MEDIA).origin : '';
@@ -59,6 +59,10 @@ export const onRequest = defineMiddleware(async (ctx, next) => {
         : ctx.redirect('/admin/login');
     }
     ctx.locals.user = user;
+    const renewed = ctx.request.method === 'GET' ? await renewSession(getDB(ctx.locals), ctx.request, user, ctx.url.protocol === 'https:') : null;
+    const res = secure(await next(), ctx.url, true);
+    if (renewed) res.headers.append('Set-Cookie', renewed);
+    return res;
   }
   return secure(await next(), ctx.url, true);
 });

@@ -49,14 +49,23 @@ export async function createSession(db: D1, userId: number) {
 const tokenFrom = (request: Request) =>
   request.headers.get('cookie')?.split(/;\s*/).find((c) => c.startsWith(COOKIE + '='))?.slice(COOKIE.length + 1) ?? null;
 
-export type AdminUser = { id: number; name: string; email: string; role: string };
+export type AdminUser = { id: number; name: string; email: string; role: string; expires_at?: string };
 
 export async function getUser(db: D1, request: Request): Promise<AdminUser | null> {
   const token = tokenFrom(request);
   if (!token || !/^[0-9a-f]{64}$/.test(token)) return null;
   return db.prepare(
-    `SELECT u.id, u.name, u.email, u.role FROM sessions s JOIN users u ON u.id = s.user_id
+    `SELECT u.id, u.name, u.email, u.role, s.expires_at FROM sessions s JOIN users u ON u.id = s.user_id
      WHERE s.id = ? AND s.expires_at > ?`).bind(await sha256Hex(token), now()).first<AdminUser>();
+}
+
+// Sliding login: when less than 80 days are left, push the expiry back to 90 days and hand out a fresh cookie.
+export async function renewSession(db: D1, request: Request, user: AdminUser, secure: boolean) {
+  const token = tokenFrom(request);
+  if (!token || !user.expires_at || Date.parse(user.expires_at) - Date.now() > 80 * 86400_000) return null;
+  const expires = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString().replace(/\.\d+Z$/, 'Z');
+  await db.prepare('UPDATE sessions SET expires_at = ? WHERE id = ?').bind(expires, await sha256Hex(token)).first();
+  return sessionCookie(token, secure);
 }
 
 export async function destroySession(db: D1, request: Request) {

@@ -1,7 +1,12 @@
 ---
-import '@fontsource/mukta/400.css';
-import '@fontsource/mukta/600.css';
-import '@fontsource/noto-serif-devanagari/700.css';
+import '@fontsource/hind/devanagari-400.css';
+import '@fontsource/hind/devanagari-500.css';
+import '@fontsource/hind/devanagari-600.css';
+import '@fontsource/hind/latin-400.css';
+import '@fontsource/hind/latin-600.css';
+import '@fontsource/martel/devanagari-700.css';
+import '@fontsource/martel/devanagari-800.css';
+import '@fontsource/martel/latin-800.css';
 import '@fontsource/noto-serif-devanagari/800.css';
 import '../styles/newspaper.css';
 import AdSlot from '../components/AdSlot.astro';
@@ -38,7 +43,7 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
 <html lang="mr">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>{title}</title>
   <meta name="description" content={description} />
   <link rel="canonical" href={canonicalUrl} />
@@ -67,7 +72,6 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
   <a class="skip" href="#main">मुख्य मजकुराकडे जा</a>
   <div class="topbar">
     <div class="wrap topbar-in">
-      <span class="tb-date">{today}</span>
       {ticker.length > 0 && (
         <div class="ticker" aria-label="ताज्या घडामोडी">
           <span class="ticker-label">ताज्या घडामोडी</span>
@@ -131,8 +135,19 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
     <div class="foot-bottom">
       <div class="wrap foot-bottom-in">
         <span>{s.footer_text}</span>
-        <span class="credit">Designed &amp; developed by <a href="https://www.techyverve.in" target="_blank" rel="noopener"><b>Techyverve</b></a>
-          · <a href="tel:+919172523881">📞 9172523881</a> · 📍 पुणे · <a href="https://www.techyverve.in" target="_blank" rel="noopener">www.techyverve.in</a></span>
+      </div>
+    </div>
+    <div class="tv-band">
+      <div class="wrap tv-in">
+        <a class="tv-brand" href="https://www.techyverve.in" target="_blank" rel="noopener">
+          <img src="/techyverve-mark.webp" alt="Techyverve" width="160" height="163" loading="lazy" />
+          <span><small>Designed &amp; developed by</small><b>TECHYVERVE</b><em>Websites · Apps · Digital solutions</em></span>
+        </a>
+        <div class="tv-links">
+          <a href="tel:+919172523881">📞 +91 91725 23881</a>
+          <a href="https://www.techyverve.in" target="_blank" rel="noopener">🌐 www.techyverve.in</a>
+          <span>📍 Pune, Maharashtra</span>
+        </div>
       </div>
     </div>
   </footer>
