@@ -549,7 +549,7 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
 /* Opened story: text flows round the photo and fills the space under it */
 @media (min-width: 760px) {
   .lead3:has(.readhere[open]) { display: block; padding: 0 0 1rem; }
-  .lead3:has(.readhere[open]) .lead3-img { float: left; width: 58%; margin: 0 1.3rem .8rem 0; }
+  .lead3:has(.readhere[open]) .lead3-img { float: left; width: 58%; margin: 0 1.5rem 1rem 0; }
   .lead3:has(.readhere[open]) .lead3-text { display: block; padding: 1rem 1.2rem 0; }
   .lead3:has(.readhere[open]) .lead3-text > * { margin-bottom: .5rem; }
   .lead3:has(.readhere[open])::after { content: ''; display: block; clear: both; }
@@ -560,12 +560,13 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
 /* A top-news card opened to read grows to the full row like the main story */
 .mainrow .tgrid { grid-auto-flow: row dense; }
 .rcard:has(.readhere[open]) { grid-column: 1 / -1; display: block; padding-bottom: .9rem; border-top: 4px solid var(--c, #c4001f); }
-.rcard:has(.readhere[open]) .rcard-img { float: left; width: 58%; margin: 0 1.3rem .8rem 0; }
+.rcard:has(.readhere[open]) .rcard-img { float: left; width: 58%; margin: 0 1.5rem 1rem 0 !important; }
+.rcard:has(.readhere[open]) .rcard-img img { aspect-ratio: 16/10; }
 .rcard:has(.readhere[open]) .kicker { margin: .9rem .9rem 0 0; display: inline-block; }
 .rcard:has(.readhere[open]) h3 { font-size: clamp(1.3rem, 2.6vw, 1.9rem); font-weight: 800; line-height: 1.35; margin: .4rem .9rem .5rem 0; }
 .rcard:has(.readhere[open]) .readhere { margin: 0 1.1rem 0 1.1rem; width: auto; }
 .rcard:has(.readhere[open])::after { content: ''; display: block; clear: both; }
 @media (max-width: 759px) {
-  .rcard:has(.readhere[open]) .rcard-img { float: none; width: 100%; margin: 0 0 .5rem; }
+  .rcard:has(.readhere[open]) .rcard-img { float: none; width: 100%; margin: 0 0 .5rem !important; }
   .rcard:has(.readhere[open]) .kicker, .rcard:has(.readhere[open]) h3, .rcard:has(.readhere[open]) .readhere { margin-left: .8rem; margin-right: .8rem; }
 }
