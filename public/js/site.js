@@ -15,6 +15,10 @@
   });
   ['gesturestart', 'gesturechange'].forEach(function (ev) { document.addEventListener(ev, function (e) { e.preventDefault(); }); });
   document.addEventListener('touchmove', function (e) { if (e.touches.length > 1) e.preventDefault(); }, { passive: false });
+  // A top-news card opened to read grows to the full row: bring it into view.
+  document.querySelectorAll('.rcard .readhere').forEach(function (d) {
+    d.addEventListener('toggle', function () { if (d.open) d.closest('.rcard').scrollIntoView({ behavior: 'smooth', block: 'start' }); });
+  });
   var t = document.getElementById('today');
   if (t) t.textContent = new Date().toLocaleDateString('mr-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   document.querySelectorAll('[data-copy]').forEach(function (b) {

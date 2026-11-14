@@ -17,9 +17,8 @@
   "dependencies": {
     "@astrojs/cloudflare": "^14.4.6",
     "@astrojs/react": "^7.1.4",
-    "@fontsource/hind": "^5.3.0",
-    "@fontsource/martel": "^5.3.0",
     "@fontsource/mukta": "^5.3.0",
+    "@fontsource/noto-sans-devanagari": "^5.3.0",
     "@fontsource/noto-serif-devanagari": "^5.3.0",
     "@tiptap/core": "^3.33.0",
     "@tiptap/pm": "^3.33.0",
