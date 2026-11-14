@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "in.news24shivneri.admin",
-        "sha256_cert_fingerprints": ["3E:2E:92:52:90:D9:B2:3F:66:CD:AD:93:B4:8A:21:3E:B5:C0:3B:45:BE:20:7D:70:7F:12:17:41:57:55:D3:62"]
-      }
-    }]
