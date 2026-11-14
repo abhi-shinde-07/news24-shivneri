@@ -582,3 +582,7 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
 .readhere[open] .body { animation: read-in .45s ease-out both; }
 @keyframes read-in { from { opacity: 0; transform: translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none; } .readhere[open] .body { animation: none; } }
+
+/* The dashed divider sits beside the photo, never across it */
+.readhere .body { border-top: 0; }
+.readhere[open] > summary { display: flow-root; border-bottom: 1px dashed var(--card-line); margin-bottom: .5rem; }
