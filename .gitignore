@@ -4,3 +4,4 @@ dist
 .dev.vars
 seed/admin.sql
 seed/*.local.sql
+android-app/
