@@ -27,7 +27,7 @@ img { max-width: 100%; display: block; }
 @media (min-width: 860px) { .masthead .logo img { height: 110px; } }
 .masthead .tag { margin: .3rem 0 0; font-family: var(--font-head); font-weight: 700; font-size: 1.1rem; color: var(--red); }
 
-.nav { border-bottom: 1px solid var(--rule); }
+.nav { view-transition-name: topnav; border-bottom: 1px solid var(--rule); }
 .nav ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; }
 .nav a { display: block; padding: .55rem .9rem; font-weight: 600; border-right: 1px solid var(--rule-light); }
 .nav li:last-child a { border-right: 0; }
@@ -571,9 +571,14 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
   .rcard:has(.readhere[open]) .kicker, .rcard:has(.readhere[open]) h3, .rcard:has(.readhere[open]) .readhere { margin-left: .8rem; margin-right: .8rem; }
 }
 
-/* Smooth "read here" opening */
-::view-transition-group(*) { animation-duration: .45s; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
-::view-transition-old(*), ::view-transition-new(*) { height: 100%; object-fit: cover; }
+/* Smooth "read here" opening: each block slides/grows; text is revealed, never stretched or doubled */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; }
+::view-transition-group(*) { animation-duration: .42s; animation-timing-function: cubic-bezier(.2,.8,.2,1); }
+::view-transition-image-pair(*) { overflow: clip; }
+::view-transition-old(*), ::view-transition-new(*) { height: auto; width: 100%; object-fit: none; object-position: 0 0; }
+::view-transition-old(*) { animation: none; opacity: 0; }
+::view-transition-new(*) { animation: none; }
+::view-transition-group(topnav) { animation: none; z-index: 10; }
 .readhere[open] .body { animation: read-in .45s ease-out both; }
 @keyframes read-in { from { opacity: 0; transform: translateY(8px); } }
-@media (prefers-reduced-motion: reduce) { ::view-transition-group(*) { animation: none; } .readhere[open] .body { animation: none; } }
+@media (prefers-reduced-motion: reduce) { ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*) { animation: none; } .readhere[open] .body { animation: none; } }

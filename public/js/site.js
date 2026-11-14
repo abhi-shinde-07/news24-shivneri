@@ -18,6 +18,10 @@
   // "Read here": the story opens with a smooth animation; a top-news card grows to the full row.
   var stories = document.querySelectorAll('.lead3, .mainrow .rcard');
   stories.forEach(function (el, i) { el.style.viewTransitionName = 'story' + i; });
+  // Every other homepage block slides to its new place instead of cross-fading with the old page.
+  document.querySelectorAll('#main > *:not(.mainrow):not(.lead3), .mainrow > .bar-head').forEach(function (el, i) {
+    if (!el.style.viewTransitionName && el.offsetParent) el.style.viewTransitionName = 'blk' + i;
+  });
   document.querySelectorAll('.lead3 .readhere > summary, .rcard .readhere > summary').forEach(function (sum) {
     sum.addEventListener('click', function (e) {
       var d = sum.parentNode, card = d.closest('.rcard'), reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
