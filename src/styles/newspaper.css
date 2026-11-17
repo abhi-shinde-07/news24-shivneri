@@ -598,3 +598,19 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
   .ad-row img, .ad-slot img { width: 100%; height: auto; max-height: 520px; object-fit: contain; border-radius: 8px; display: block; }
   .ad-slot:not([data-count="1"])::after { content: '\2039  बाजूला सरकवा  \203A'; display: block; font-size: .68rem; color: var(--ink-soft); margin-top: .3rem; text-align: center; }
 }
+
+/* Phone: menu hidden behind a button, opens as a full list */
+.nav-toggle { display: none; }
+@media (max-width: 859px) {
+  .nav-toggle { display: flex; align-items: center; gap: .6rem; width: 100%; margin: 0; padding: .6rem .2rem; background: none; border: 0; color: #fff; font: inherit; font-weight: 700; font-size: 1rem; cursor: pointer; }
+  .nav-burger, .nav-burger::before, .nav-burger::after { display: block; width: 20px; height: 2px; background: #ffcf3f; border-radius: 2px; transition: transform .25s, background .25s; position: relative; }
+  .nav-burger::before, .nav-burger::after { content: ''; position: absolute; left: 0; }
+  .nav-burger::before { top: -6px; } .nav-burger::after { top: 6px; }
+  .nav.open .nav-burger { background: transparent; }
+  .nav.open .nav-burger::before { transform: translateY(6px) rotate(45deg); }
+  .nav.open .nav-burger::after { transform: translateY(-6px) rotate(-45deg); }
+  .nav ul { display: none; overflow: visible; flex-wrap: wrap; padding-bottom: .5rem; }
+  .nav.open ul { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; animation: nav-in .2s ease-out; }
+  .nav.open a { border: 0; border-radius: 6px; padding: .6rem .8rem; background: rgba(255,255,255,.06); }
+  @keyframes nav-in { from { opacity: 0; transform: translateY(-6px); } }
+}

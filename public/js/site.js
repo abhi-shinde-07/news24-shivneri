@@ -34,6 +34,15 @@
       else { flip(); settle(); }
     });
   });
+  // Phone menu: hidden behind the "मेनू" button.
+  var nt = document.querySelector('.nav-toggle');
+  if (nt) {
+    var nav = nt.closest('.nav');
+    nt.addEventListener('click', function () {
+      var open = nav.classList.toggle('open'); nt.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+    document.addEventListener('click', function (e) { if (nav.classList.contains('open') && !nav.contains(e.target)) { nav.classList.remove('open'); nt.setAttribute('aria-expanded', 'false'); } });
+  }
   var t = document.getElementById('today');
   if (t) t.textContent = new Date().toLocaleDateString('mr-IN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   document.querySelectorAll('[data-copy]').forEach(function (b) {

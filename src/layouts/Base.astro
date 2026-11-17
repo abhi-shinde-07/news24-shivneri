@@ -94,7 +94,7 @@ const social = ([['Facebook', s.social_facebook], ['Instagram', s.social_instagr
       </div>
     </div>
   </header>
-  <nav class="nav" aria-label="मुख्य मेनू"><div class="wrap"><ul>{nav.map(([t, h]) =>
+  <nav class="nav" aria-label="मुख्य मेनू"><div class="wrap"><button type="button" class="nav-toggle" aria-expanded="false" aria-controls="nav-list"><span class="nav-burger" aria-hidden="true"></span>मेनू</button><ul id="nav-list">{nav.map(([t, h]) =>
     <li><a href={h} aria-current={(h === '/' ? path === '/' : path.startsWith(h)) ? 'page' : undefined}>{t}</a></li>)}</ul></div></nav>
   <div class="wrap">
     <AdSlot position="top" />
