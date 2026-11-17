@@ -184,7 +184,11 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
     };
   })();
   // Installable app: register the admin service worker and offer an install button where supported.
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin' }).catch(function () {});
+  // Inside the Android app the service worker is not used (and an old one is removed): the app keeps its own login.
+  if ('serviceWorker' in navigator) {
+    if (/N24AdminApp/.test(navigator.userAgent)) navigator.serviceWorker.getRegistrations().then(function (rs) { rs.forEach(function (r) { r.unregister(); }); });
+    else navigator.serviceWorker.register('/admin-sw.js', { scope: '/admin' }).catch(function () {});
+  }
   window.addEventListener('beforeinstallprompt', function (e) { e.preventDefault(); window.__n24Install = e; });
   window.addEventListener('appinstalled', function () { var b = document.getElementById('install-app'); if (b) b.hidden = true; });
   document.addEventListener('DOMContentLoaded', function () {
