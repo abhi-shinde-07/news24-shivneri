@@ -27,6 +27,11 @@ const ld = JSON.stringify({
   inLanguage: 'mr',
 }).replace(/</g, '\\u003c');
 const share = encodeURIComponent(`${a.headline}\n${url}`);
+// Story text split after the 2nd paragraph (only when there is enough text after it) for the in-story ad.
+const bodyHtml = rewriteBody(a.body_html);
+const cut = [...bodyHtml.matchAll(/<\/p>/gi)][1];
+const bodyParts = cut && cut.index! + 4 < bodyHtml.length - 200
+  ? [bodyHtml.slice(0, cut.index! + 4), bodyHtml.slice(cut.index! + 4)] : [bodyHtml];
 ---
 <Base title={`${a.headline} – NEWS24 SHIVNERI`} description={description} canonical={`/news/${a.id}`}
   type="article" image={thumb ?? undefined} published={a.published_at} modified={a.updated_at}>
@@ -46,9 +51,14 @@ const share = encodeURIComponent(`${a.headline}\n${url}`);
     </div>
     {a.main_image_key && <img class="lead-img" src={mediaUrl(a.main_image_key)} alt={a.main_image_caption ?? a.headline} width="1200" height="675" fetchpriority="high" />}
     {(a.main_image_caption || a.image_credit) && <p class="caption">{a.main_image_caption}{a.image_credit && <> · श्रेय: {a.image_credit}</>}</p>}
-    <AdSlot position="in_between" />
-    <!-- body_html is sanitized when saved (Phase 5) -->
-    <div class="body" set:html={rewriteBody(a.body_html)} />
+    <AdSlot position="article_top" />
+    <!-- body_html is sanitized when saved (Phase 5); the middle ad goes after the second paragraph -->
+    {bodyParts[1] ? <>
+      <div class="body" set:html={bodyParts[0]} />
+      <AdSlot position="article_middle" />
+      <div class="body" set:html={bodyParts[1]} />
+    </> : <div class="body" set:html={bodyParts[0]} />}
+    <AdSlot position="article_bottom" />
     {a.youtube_id && (
       <section class="art-video" aria-label="व्हिडिओ"><h2 class="section-head">या बातमीचा व्हिडिओ</h2><div class="player">
         <button type="button" data-yt={a.youtube_id} aria-label={`व्हिडिओ चालू करा: ${a.headline}`}>
