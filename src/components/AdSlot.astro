@@ -12,8 +12,10 @@ const ads = (await getLiveAds(getDB(Astro.locals), Astro.locals)).filter((a) => 
   <aside class={`ad-slot ad-${position}`} aria-label="जाहिरात" data-count={ads.length}>
     <span class="ad-label">जाहिरात</span>
     <div class="ad-row">{ads.map((ad) => (
-      <a href={`/go/${ad.id}`} rel="sponsored noopener" target="_blank">
-        <img src={mediaUrl(ad.image_key)} alt={`जाहिरात: ${ad.advertiser}`} loading="lazy" decoding="async" />
-      </a>))}</div>
+      ad.has_link
+        ? <a href={`/go/${ad.id}`} rel="sponsored noopener" target="_blank">
+            <img src={mediaUrl(ad.image_key)} alt={`जाहिरात: ${ad.advertiser}`} loading="lazy" decoding="async" /></a>
+        : <a href={mediaUrl(ad.image_key)} data-lightbox data-caption={`जाहिरात: ${ad.advertiser}`}>
+            <img src={mediaUrl(ad.image_key)} alt={`जाहिरात: ${ad.advertiser}`} loading="lazy" decoding="async" /></a>))}</div>
   </aside>
 )}

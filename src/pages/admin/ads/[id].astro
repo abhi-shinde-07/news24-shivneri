@@ -12,7 +12,7 @@ const isNew = Astro.params.id === 'new';
 const id = Number(Astro.params.id);
 type Ad = { advertiser: string; image_key: string; click_url: string; position: string; start_date: string; end_date: string; status: string };
 let ad: Ad | null = isNew
-  ? { advertiser: '', image_key: '', click_url: 'https://', position: 'sidebar', start_date: new Date().toISOString().slice(0, 10),
+  ? { advertiser: '', image_key: '', click_url: '', position: 'sidebar', start_date: new Date().toISOString().slice(0, 10),
       end_date: new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10), status: 'active' }
   : Number.isInteger(id) ? await db.prepare('SELECT advertiser, image_key, click_url, position, start_date, end_date, status FROM ads WHERE id = ?').bind(id).first<Ad>() : null;
 if (!ad) return new Response('जाहिरात सापडली नाही', { status: 404 });
@@ -24,7 +24,7 @@ if (Astro.request.method === 'POST') {
   ad = d;
   if (!d.advertiser) error = 'जाहिरातदाराचे नाव लिहा.';
   else if (!KEY_RE.test(d.image_key) || !(await db.prepare('SELECT id FROM media WHERE key = ?').bind(d.image_key).first())) error = 'Media Library मधून प्रतिमा निवडा.';
-  else if (!isHttps(d.click_url)) error = 'क्लिक URL https:// ने सुरू होणारी असावी.';
+  else if (d.click_url && !isHttps(d.click_url)) error = 'लिंक https:// ने सुरू होणारी असावी (किंवा रिकामी ठेवा).';
   else if (!(POSITIONS as readonly string[]).includes(d.position)) error = 'जागा निवडा.';
   else if (!isDate(d.start_date) || !isDate(d.end_date)) error = 'तारखा योग्य नाहीत.';
   else if (d.end_date < d.start_date) error = 'शेवटची तारीख सुरुवातीच्या तारखेनंतर असावी.';
@@ -45,7 +45,7 @@ const media = (await db.prepare('SELECT key, filename FROM media ORDER BY id DES
   <form method="post">
     <div class="row">
       <div class="f"><label for="advertiser">जाहिरातदाराचे नाव</label><input id="advertiser" name="advertiser" value={ad.advertiser} required maxlength="120" /></div>
-      <div class="f"><label for="click_url">क्लिक URL (https only)</label><input id="click_url" name="click_url" type="url" value={ad.click_url} required pattern="https://.+" /></div>
+      <div class="f"><label for="click_url">लिंक <small>(ऐच्छिक)</small></label><input id="click_url" name="click_url" type="url" value={ad.click_url ?? ''} pattern="https://.+" placeholder="https://… (रिकामी ठेवल्यास क्लिकवर फोटो मोठा दिसेल)" /></div>
     </div>
     <div class="row">
       <div class="f"><label for="position">जागा</label><select id="position" name="position">{POSITIONS.map((p) => <option value={p} selected={ad!.position === p}>{POSITION_LABEL[p]}</option>)}</select></div>

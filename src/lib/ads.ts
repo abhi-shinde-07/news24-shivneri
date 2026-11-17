@@ -6,12 +6,13 @@ export type Position = (typeof POSITIONS)[number];
 export const POSITION_LABEL: Record<Position, string> = {
   top: 'वर (Top)', main_headline: 'मुख्य बातमीजवळ', sidebar: 'बाजूची पट्टी', in_between: 'बातम्यांच्या मध्ये', bottom: 'तळाशी (Bottom)',
 };
-export const ADS_CACHE_KEY = 'ads-v1';
-export type LiveAd = { id: number; advertiser: string; image_key: string; position: Position };
+export const ADS_CACHE_KEY = 'ads-v2';
+// has_link: 1 = click opens the advertiser's link, 0 = click shows the ad picture large.
+export type LiveAd = { id: number; advertiser: string; image_key: string; position: Position; has_link: number };
 
 // All live ads, cached at the edge for 5 minutes so page views do not query D1 for ads.
 export const getLiveAds = (db: D1, locals: any) =>
   cachedJson<LiveAd[]>(locals, ADS_CACHE_KEY, 300, async () =>
     (await db.prepare(
-      `SELECT id, advertiser, image_key, position FROM ads WHERE status = 'active'
-       AND start_date <= date('now') AND end_date >= date('now') AND click_url LIKE 'https://%'`).all<LiveAd>()).results);
+      `SELECT id, advertiser, image_key, position, (click_url LIKE 'https://%') AS has_link FROM ads WHERE status = 'active'
+       AND start_date <= date('now') AND end_date >= date('now')`).all<LiveAd>()).results);
