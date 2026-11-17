@@ -15,7 +15,7 @@ const arts = await epArticles(db, { limit: 150 });
 const data = JSON.stringify({
   id: ed?.id ?? 0,
   date: ed?.edition_date ?? new Date(Date.now() + 5.5 * 3600_000).toISOString().slice(0, 10),
-  title: ed?.title ?? 'NEWS24 शिवनेरी ई-पेपर',
+  title: ed?.title ?? 'न्यूज २४ शिवनेरी ई-पेपर',
   edition: ed?.edition_name ?? 'पुणे जिल्हा आवृत्ती',
   status: ed?.status ?? 'draft',
   layout: ed?.layout ? cleanLayout(JSON.parse(ed.layout)) : { pages: [{ items: [] }] },
@@ -121,7 +121,7 @@ const data = JSON.stringify({
     canvas.innerHTML = pages.map((p, n) => `
       ${editing ? `<div class="eb-pagehead">पान ${n + 1}${pages.length > 1 && !p.items.length ? ` <button type="button" class="danger" data-delpage="${n}">हे रिकामे पान काढा</button>` : ''}</div>` : ''}
       <div class="ep-page">${mast(n + 1)}<div class="ep-grid">${p.items.map((it, i) => itemHtml(it, n, i)).join('') || (editing ? '<div class="eb-empty">डावीकडून बातम्या जोडा</div>' : '')}</div>
-      <div class="ep-foot"><span>NEWS24 शिवनेरी · www.news24shivneri.in</span><span>पान ${n + 1}</span></div></div>`).join('');
+      <div class="ep-foot"><span>न्यूज २४ शिवनेरी · www.news24shivneri.in</span><span>पान ${n + 1}</span></div></div>`).join('');
     list();
   }
   function list() {

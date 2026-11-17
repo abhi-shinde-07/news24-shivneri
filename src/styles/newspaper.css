@@ -7,7 +7,7 @@
   --rule-light: #bdbdbd;
   --red: #b3001b;
   --font-head: 'Noto Serif Devanagari', serif;
-  --font-body: 'Noto Sans Devanagari', 'Mukta', system-ui, sans-serif;
+  --font-body: 'Mukta', system-ui, sans-serif;
 }
 *, *::before, *::after { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }

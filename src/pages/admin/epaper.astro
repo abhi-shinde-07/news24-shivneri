@@ -60,7 +60,7 @@ const pct = (u.r2 / R2_LIMIT) * 100;
         <div class="f"><label for="d">तारीख</label><input id="d" name="edition_date" type="date" required value={new Date().toISOString().slice(0, 10)} /></div>
         <div class="f"><label for="en">आवृत्तीचे नाव</label><input id="en" name="edition_name" value={s.edition} maxlength="100" /></div>
       </div>
-      <div class="f"><label for="t">शीर्षक</label><input id="t" name="title" required maxlength="200" value="NEWS24 SHIVNERI ई-पेपर" /></div>
+      <div class="f"><label for="t">शीर्षक</label><input id="t" name="title" required maxlength="200" value="न्यूज २४ शिवनेरी ई-पेपर" /></div>
       <div class="f"><label for="p">PDF (कमाल {MAX_PDF / 1048576} MB)</label><input id="p" name="pdf" type="file" accept="application/pdf" required /></div>
       <div class="f"><label for="st">स्थिती</label><select id="st" name="status"><option value="published">प्रकाशित</option><option value="draft">ड्राफ्ट</option></select></div>
       <button type="submit">अपलोड करा</button> <span id="umsg" role="status"></span>
