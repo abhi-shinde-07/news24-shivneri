@@ -1,3 +1,4 @@
+import type { D1 } from './db';
 export const MAX_PDF = 25 * 1024 * 1024; // change here to allow bigger e-paper PDFs
 export const MAX_COVER = 1024 * 1024;
 export const EPAPER_KEY_RE = /^epaper\/\d{4}\/\d{2}\/[a-z0-9-]+\.(pdf|webp|jpg|png)$/;
@@ -36,3 +37,20 @@ export const findItem = (l: EpLayout, id: string) => {
   for (let n = 0; n < l.pages.length; n++) { const it = l.pages[n].items.find((i) => i.id === id); if (it) return { it, page: n + 1 }; }
   return null;
 };
+
+// Published news as plain-text stories for the e-paper builder (newest first, optional title search and date range).
+const htmlText = (html: string) => html.replace(/<\/(p|h\d|li|div)>|<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '')
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+  .split('\n').map((l) => l.trim()).filter(Boolean).join('\n');
+export type EpArt = { aid: number; h: string; loc: string; img: string; t: string; day: string };
+export async function epArticles(db: D1, opt: { q?: string; from?: string; to?: string; limit?: number } = {}): Promise<EpArt[]> {
+  const where = ["status = 'published'"], args: unknown[] = [];
+  if (opt.q) { where.push('headline LIKE ?'); args.push(`%${opt.q}%`); }
+  if (opt.from) { where.push('substr(published_at,1,10) >= ?'); args.push(opt.from); }
+  if (opt.to) { where.push('substr(published_at,1,10) <= ?'); args.push(opt.to); }
+  const rows = (await db.prepare(
+    `SELECT id, headline, location_label, main_image_key, body_html, substr(published_at,1,10) AS day FROM articles
+     WHERE ${where.join(' AND ')} ORDER BY published_at DESC LIMIT ${Math.min(opt.limit ?? 150, 300)}`).bind(...args)
+    .all<{ id: number; headline: string; location_label: string | null; main_image_key: string | null; body_html: string; day: string }>()).results;
+  return rows.map((a) => ({ aid: a.id, h: a.headline, loc: a.location_label ?? '', img: a.main_image_key ?? '', t: htmlText(a.body_html), day: a.day }));
+}

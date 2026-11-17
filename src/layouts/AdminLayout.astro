@@ -34,7 +34,7 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
 ---
 <!doctype html>
 <html lang="mr"><head>
-<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
 <meta name="robots" content="noindex, nofollow" /><title>{title} – NEWS24 SHIVNERI Admin</title>
 <link rel="icon" type="image/png" href="/favicon.png" />
 <link rel="manifest" href="/admin.webmanifest" />
@@ -53,11 +53,22 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
   .topbar .sp{flex:1} .topbar a.site{color:#fff;font-size:.88rem;border:1px solid #6b3a40;border-radius:6px;padding:.3rem .7rem;text-decoration:none}
   .topbar form button{background:transparent;border:1px solid #6b3a40;color:#fff;padding:.3rem .7rem;font-size:.88rem;border-radius:6px}
   .layout{display:flex;min-height:calc(100vh - 60px)}
-  aside{width:240px;background:#fff;border-right:1px solid var(--line);padding:.8rem;flex-shrink:0}
-  aside .grp{margin:1rem 0 .3rem;padding:0 .6rem;font-size:.75rem;color:#a8a29e;font-weight:600}
-  aside a{display:flex;align-items:center;gap:.55rem;padding:.55rem .7rem;border-radius:8px;color:var(--ink);text-decoration:none;font-size:.95rem}
-  aside a:hover{background:#f5f0ee} aside a.on{background:#fde8eb;color:var(--red);font-weight:600} aside .ic{width:1.4rem;text-align:center}
-  aside .close{display:none} aside .mobile-extra{display:none}
+  aside{width:264px;flex-shrink:0;background:linear-gradient(180deg,#24090e 0%,#170507 100%);color:#e9dcdd;display:flex;flex-direction:column;position:sticky;top:59px;height:calc(100vh - 59px);overflow-y:auto;scrollbar-width:thin;scrollbar-color:#5a2a31 transparent}
+  aside nav{padding:.6rem .7rem 1rem;flex:1}
+  aside .grp{margin:1.1rem 0 .35rem;padding:0 .75rem;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#a77f84;font-weight:700}
+  aside a{position:relative;display:flex;align-items:center;gap:.7rem;padding:.6rem .75rem;margin:2px 0;border-radius:10px;color:#eadfe0;text-decoration:none;font-size:.95rem;transition:background .15s,color .15s}
+  aside a:hover{background:rgba(255,255,255,.07);color:#fff}
+  aside a.on{background:linear-gradient(90deg,#c4001f,#9c0019);color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(196,0,31,.35)}
+  aside a.on::before{content:'';position:absolute;left:-.7rem;top:20%;bottom:20%;width:4px;border-radius:0 4px 4px 0;background:#ffcf3f}
+  aside .ic{width:2rem;height:2rem;display:grid;place-items:center;border-radius:8px;background:rgba(255,255,255,.07);font-size:1rem;flex:none}
+  aside a.on .ic{background:rgba(255,255,255,.18)}
+  aside .side-head{display:none}
+  aside .me{margin:.6rem;padding:.7rem;border-radius:12px;background:rgba(255,255,255,.06);display:flex;align-items:center;gap:.6rem}
+  aside .me .av{width:2.3rem;height:2.3rem;border-radius:50%;background:#ffcf3f;color:#3a2a00;display:grid;place-items:center;font-weight:700;flex:none}
+  aside .me div{flex:1;min-width:0;line-height:1.25;font-size:.88rem}.me small{color:#a77f84;display:block;overflow:hidden;text-overflow:ellipsis}
+  aside .me form{margin:0} aside .me button{background:rgba(255,255,255,.1);padding:.4rem .55rem;font-size:.85rem;border-radius:8px}
+  .scrim{display:none}
+  .menu-btn{display:none;background:rgba(255,255,255,.14);border:0;color:#fff;width:40px;height:40px;border-radius:10px;font-size:1.3rem;padding:0;line-height:1}
   main{flex:1;padding:1.4rem 1.6rem 2rem;max-width:1100px;min-width:0} h2{margin-top:0;font-size:1.4rem} a{color:var(--red)}
   .help{background:#eef4ff;border:1px solid #c9dafb;color:#1e3a8a;padding:.65rem .9rem;border-radius:10px;margin:0 0 1rem;font-size:.92rem;line-height:1.6}
   .tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.8rem;margin:1rem 0 1.5rem}
@@ -70,7 +81,8 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
   .tablewrap{overflow-x:auto;border-radius:12px}
   button,.button{font:inherit;padding:.55rem 1rem;border:0;border-radius:8px;background:var(--red);color:#fff;cursor:pointer;text-decoration:none;display:inline-block}
   .danger{background:#fff;color:var(--red);border:1px solid var(--red)} .small{padding:.3rem .65rem;font-size:.85rem}
-  .f{margin:.75rem 0}.f label{display:block;font-size:.9rem;margin-bottom:.3rem;font-weight:600;color:#44403c}.f input,.f select,.f textarea{width:100%;padding:.6rem .7rem;border:1px solid #cfc9c1;border-radius:8px;font:inherit;background:#fff}
+  .f{margin:.75rem 0}.f label{display:block;font-size:.9rem;margin-bottom:.3rem;font-weight:600;color:#44403c}.f input,.f select,.f textarea{width:100%;padding:.65rem .75rem;border:1px solid #cfc9c1;border-radius:10px;font:inherit;background:#fff}
+  input,select,textarea,.ProseMirror{font-size:16px!important} /* 16px+ so phones never zoom into a field */
   .f input:focus,.f select:focus,.f textarea:focus{outline:2px solid #f3a3b0;border-color:var(--red)} .f small{color:var(--soft)}
   .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem}.chk{display:flex;gap:.45rem;align-items:center;font-size:.95rem}
   .toolbar{display:flex;flex-wrap:wrap;gap:.3rem;margin-bottom:.4rem}.tb{background:#fff;color:var(--ink);border:1px solid #cfc9c1;padding:.35rem .65rem;font-size:.85rem}.tb.act{background:var(--maroon);color:#fff}
@@ -91,9 +103,15 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
   @media(max-width:760px){
     .topbar{padding:.5rem .7rem}.topbar img{width:34px;height:34px}.topbar a.site,.topbar form{display:none}
     .layout{display:block}
-    aside{display:none;position:fixed;inset:0;z-index:40;width:auto;border:0;overflow-y:auto;padding:1rem 1rem 5rem}
-    aside:target{display:block} aside .close{display:block;text-align:right;margin-bottom:.3rem;justify-content:flex-end}
-    aside .mobile-extra{display:block}
+    .menu-btn{display:grid;place-items:center}
+    aside{position:fixed;top:0;left:0;bottom:0;height:auto;width:min(84vw,300px);z-index:45;transform:translateX(-105%);transition:transform .25s ease;box-shadow:8px 0 30px rgba(0,0,0,.35)}
+    body.menu-open aside{transform:none}
+    aside .side-head{display:flex;align-items:center;gap:.6rem;padding:.9rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);font-weight:700;color:#fff}
+    aside .side-head img{width:36px;height:36px;border-radius:50%;background:#fff}
+    aside .side-head span{flex:1} aside .side-head button{background:rgba(255,255,255,.1);width:34px;height:34px;padding:0;border-radius:8px}
+    .scrim{display:block;position:fixed;inset:0;z-index:44;background:rgba(0,0,0,.45);opacity:0;pointer-events:none;transition:opacity .25s}
+    body.menu-open .scrim{opacity:1;pointer-events:auto}
+    body.menu-open{overflow:hidden}
     main{padding:1rem .8rem 6rem}
     h2{font-size:1.2rem}
     .tiles{grid-template-columns:1fr 1fr;gap:.6rem}.tile{padding:.8rem}.tile small{display:none}
@@ -110,6 +128,7 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
 </style></head>
 <body data-usage={usage.pct.toFixed(1)}>
 <header class="topbar">
+  <button type="button" class="menu-btn" data-menu aria-label="मेनू" aria-controls="menu">☰</button>
   <img src="/icons/admin-192.png" alt="" />
   <div class="t">न्यूज २४ शिवनेरी<small>व्यवस्थापन (Admin)</small></div>
   <span class="sp"></span>
@@ -118,19 +137,22 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
 </header>
 <div class="layout">
 <aside id="menu">
-  <a class="close" href="#">✕ बंद करा</a>
+  <div class="side-head"><img src="/icons/admin-192.png" alt="" /><span>N24 Admin</span><button type="button" data-menu aria-label="बंद करा">✕</button></div>
   <nav>
     {menu.map(([group, items]) => <>
       {group && <p class="grp">{group}</p>}
       {items.map(([icon, t, h]) => <a class={isOn(h) ? 'on' : ''} href={h}><span class="ic" aria-hidden="true">{icon}</span>{t}</a>)}
     </>)}
-    <div class="mobile-extra">
-      <p class="grp">इतर</p>
-      <a href="/" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">↗</span>वेबसाइट पहा</a>
-      <form method="post" action="/admin/logout"><button class="sec" type="submit" style="width:100%;margin-top:.4rem">⏻ बाहेर पडा ({user?.name})</button></form>
-    </div>
+    <p class="grp">इतर</p>
+    <a href="/" target="_blank" rel="noopener"><span class="ic" aria-hidden="true">↗</span>वेबसाइट पहा</a>
   </nav>
+  <div class="me">
+    <span class="av">{(user?.name ?? 'A').slice(0, 1)}</span>
+    <div><b>{user?.name}</b><small>{user?.email}</small></div>
+    <form method="post" action="/admin/logout"><button type="submit" title="बाहेर पडा">⏻</button></form>
+  </div>
 </aside>
+<div class="scrim" data-menu></div>
 <main>
   {usage.pct >= 80 && <p class="warn red" role="alert"><b>सावधान:</b> मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. पुढील अपलोड/बदल केल्यास Cloudflare चे सशुल्क वापर सुरू होऊ शकते. <a href="/admin">तपशील</a></p>}
   {usage.pct >= 70 && usage.pct < 80 && <p class="warn">मोफत मर्यादेचा {usage.pct.toFixed(0)}% वापर झाला आहे. <a href="/admin">तपशील</a></p>}
@@ -144,7 +166,7 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
   <a class={path === '/admin' ? 'on' : ''} href="/admin"><span aria-hidden="true">🏠</span>मुख्य</a>
   <a class={path === '/admin/articles/new' ? 'on' : ''} href="/admin/articles/new"><span aria-hidden="true">✍️</span>लिहा</a>
   <a class={path.startsWith('/admin/articles') && path !== '/admin/articles/new' ? 'on' : ''} href="/admin/articles"><span aria-hidden="true">📰</span>बातम्या</a>
-  <a href="#menu"><span aria-hidden="true">☰</span>अधिक</a>
+  <a href="#menu" data-menu><span aria-hidden="true">☰</span>अधिक</a>
 </nav>
 <script is:inline>
   // Above 80% of a free limit, every upload or save asks for confirmation first.
@@ -176,6 +198,12 @@ const help = HELP.filter(([p]) => path.startsWith(p)).sort((a, b) => b[0].length
       // Chrome has not offered the popup yet: show the menu steps instead.
       var d = document.getElementById('install-help'); if (d) { d.open = true; d.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     };
+  });
+  // Side menu drawer on phones.
+  document.addEventListener('click', function (e) {
+    var t = e.target.closest('[data-menu]');
+    if (t) { e.preventDefault(); document.body.classList.toggle('menu-open'); return; }
+    if (e.target.closest('aside a')) document.body.classList.remove('menu-open');
   });
   // Confirm before destructive buttons.
   document.addEventListener('click', function (e) {

@@ -614,3 +614,31 @@ body { font-feature-settings: 'locl' 1, 'kern' 1; }
   .nav.open a { border: 0; border-radius: 6px; padding: .6rem .8rem; background: rgba(255,255,255,.06); }
   @keyframes nav-in { from { opacity: 0; transform: translateY(-6px); } }
 }
+
+/* Phones: smaller, tidier type and spacing */
+@media (max-width: 640px) {
+  body { font-size: .95rem; line-height: 1.6; }
+  .wrap { padding-left: .75rem; padding-right: .75rem; }
+  .mast-name { font-size: 1.45rem; }
+  .mast-motto { font-size: .8rem; }
+  .mast-logo img { width: 62px; height: auto; }
+  .topbar { font-size: .78rem; }
+  .breaking { font-size: .88rem; }
+  .breaking strong { padding: .3rem .6rem; }
+  .lead3-text { padding: .75rem .85rem .9rem; gap: .35rem; }
+  .lead3-h { font-size: 1.22rem; line-height: 1.4; }
+  .lead3-sub { font-size: .92rem; }
+  .lead3-ex { font-size: .92rem; line-height: 1.7; }
+  .lead3-meta, .kicker { font-size: .75rem; }
+  .bar-head, .cat-head { font-size: 1rem; }
+  .tgrid, .catrow .tgrid { gap: .6rem; }
+  .tcard h3, .rcard h3, .h-small { font-size: .9rem; line-height: 1.45; }
+  .rcard:has(.readhere[open]) h3 { font-size: 1.15rem; }
+  .readhere summary { font-size: .85rem; }
+  .readhere .body, .lead3 .readhere .body, .rcard .readhere .body { font-size: .95rem; line-height: 1.75; }
+  .cta-band .cta-main b { font-size: 1.1rem; }
+  .cta-band .cta-main span { font-size: .88rem; }
+  .h-lead { font-size: 1.4rem; }
+  .article-body, .body { font-size: .98rem; }
+  .site-foot { font-size: .9rem; }
+}

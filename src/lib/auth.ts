@@ -2,8 +2,9 @@ import type { D1 } from './db';
 
 const ITERATIONS = 100_000; // Workers' WebCrypto maximum for PBKDF2
 export const COOKIE = 'n24_session';
-// Long-lived so the installed phone app stays signed in; Lax so the cookie is sent when the app is opened from the home screen.
-const SESSION_DAYS = 90;
+// Stays signed in until "बाहेर पडा" (400 days is the longest a browser keeps a cookie, and each visit renews it).
+// Lax so the cookie is sent when the app is opened from the home screen.
+const SESSION_DAYS = 400;
 const enc = new TextEncoder();
 const toHex = (b: ArrayBuffer | Uint8Array) => [...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, '0')).join('');
 const fromHex = (h: string) => new Uint8Array((h.match(/../g) ?? []).map((x) => parseInt(x, 16)));
@@ -59,10 +60,10 @@ export async function getUser(db: D1, request: Request): Promise<AdminUser | nul
      WHERE s.id = ? AND s.expires_at > ?`).bind(await sha256Hex(token), now()).first<AdminUser>();
 }
 
-// Sliding login: when less than 80 days are left, push the expiry back to 90 days and hand out a fresh cookie.
+// Sliding login: at most once a day, push the expiry back to the full 400 days and hand out a fresh cookie.
 export async function renewSession(db: D1, request: Request, user: AdminUser, secure: boolean) {
   const token = tokenFrom(request);
-  if (!token || !user.expires_at || Date.parse(user.expires_at) - Date.now() > 80 * 86400_000) return null;
+  if (!token || !user.expires_at || Date.parse(user.expires_at) - Date.now() > (SESSION_DAYS - 1) * 86400_000) return null;
   const expires = new Date(Date.now() + SESSION_DAYS * 86400_000).toISOString().replace(/\.\d+Z$/, 'Z');
   await db.prepare('UPDATE sessions SET expires_at = ? WHERE id = ?').bind(expires, await sha256Hex(token)).first();
   return sessionCookie(token, secure);

@@ -12,6 +12,13 @@ const fields: [keyof Settings, string, string?][] = [
   ['social_facebook', 'Facebook लिंक', 'url'], ['social_instagram', 'Instagram लिंक', 'url'], ['social_youtube', 'YouTube लिंक', 'url'],
   ['social_x', 'X (Twitter) लिंक', 'url'], ['social_whatsapp', 'WhatsApp चॅनल लिंक', 'url'],
 ];
+// Sections shown on the page: [icon, title, note, field keys]
+const groups: [string, string, string, (keyof Settings)[]][] = [
+  ['🌐', 'वेबसाइट', '', ['site_name', 'motto', 'edition', 'footer_text']],
+  ['📞', 'संपर्क', 'संपर्क पानावर', ['editor_name', 'contact_email', 'phone', 'address']],
+  ['📱', 'सोशल मीडिया', 'फूटरमध्ये', ['social_facebook', 'social_instagram', 'social_youtube', 'social_x', 'social_whatsapp']],
+  ['⚖️', 'तक्रार निवारण', 'कायद्याने आवश्यक', ['grievance_name', 'grievance_address']],
+];
 if (Astro.request.method === 'POST') {
   const { str } = await readForm(Astro.request);
   const vals: Partial<Settings> = {};
@@ -27,14 +34,34 @@ if (Astro.request.method === 'POST') {
 const s = await getSettings(db);
 ---
 <AdminLayout title="Website Settings">
-  <h2>Website Settings</h2>
-  <p><small>चौकटी कंसातील [मजकूर] हे placeholder आहेत – ते आमच्याबद्दल, संपर्क व संपादकीय धोरण पानांवर दिसतात. खरे तपशील भरा.</small></p>
-  <form method="post" class="card">
-    <div class="row">{fields.map(([k, label, type]) => (
-      <div class="f" style={type === 'textarea' ? 'grid-column:1/-1' : ''}><label for={k}>{label}</label>
-        {type === 'textarea' ? <textarea id={k} name={k} rows="2" maxlength="500">{s[k]}</textarea>
-          : <input id={k} name={k} type={type ?? 'text'} value={s[k]} maxlength="500" />}</div>))}
+  <style>
+    .set-head{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;margin-bottom:.4rem}
+    .set-head h2{margin:0}
+    .set-grid{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));align-items:start}
+    .set-card{background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .set-card h3{margin:0;display:flex;align-items:center;gap:.6rem;font-size:1rem;padding:.8rem 1rem;background:#faf8f5;border-bottom:1px solid var(--line)}
+    .set-card h3 span{width:2rem;height:2rem;display:grid;place-items:center;border-radius:8px;background:#fde8eb}
+    .set-card h3 small{font-weight:400;color:var(--soft);margin-left:auto;font-size:.78rem}
+    .set-body{padding:.2rem 1rem .9rem}
+    .set-body .f{margin:.7rem 0 0}
+    .set-save{position:sticky;bottom:0;z-index:5;margin:1rem -1.6rem -2rem;padding:.8rem 1.6rem;background:rgba(245,243,239,.95);backdrop-filter:blur(6px);border-top:1px solid var(--line);display:flex;gap:.8rem;align-items:center}
+    .set-save button{min-width:160px}
+    @media(max-width:760px){.set-save{bottom:58px;margin:1rem -.8rem 0;padding:.7rem .8rem}.set-save button{flex:1}}
+  </style>
+  <div class="set-head"><h2>⚙️ वेबसाइट माहिती</h2></div>
+  <p><small>ही माहिती वेबसाइटच्या मास्टहेड, फूटर, संपर्क आणि “आमच्याबद्दल” पानांवर दिसते.</small></p>
+  <form method="post">
+    <div class="set-grid">
+      {groups.map(([icon, title, note, keys]) => (
+        <section class="set-card">
+          <h3><span aria-hidden="true">{icon}</span>{title}{note && <small>{note}</small>}</h3>
+          <div class="set-body">{keys.map((k) => { const [, label, type] = fields.find((f) => f[0] === k)!; return (
+            <div class="f"><label for={k}>{label}</label>
+              {type === 'textarea' ? <textarea id={k} name={k} rows="2" maxlength="500">{s[k]}</textarea>
+                : <input id={k} name={k} type={type ?? 'text'} value={s[k]} maxlength="500" placeholder={type === 'url' ? 'https://' : ''} />}</div>); })}
+          </div>
+        </section>))}
     </div>
-    <button type="submit">जतन करा</button>
+    <div class="set-save"><button type="submit">💾 जतन करा</button><small>बदल लगेच वेबसाइटवर दिसतील.</small></div>
   </form>
 </AdminLayout>
